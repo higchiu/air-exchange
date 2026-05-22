@@ -1,0 +1,21 @@
+# 最小硬件：仅 ESP32-S3 + I2C bus_a（无触摸屏）
+# 使用 LVGL 屏时：在 air-exchange.yaml 中改挂 esphome-modular-lvgl-buttons 的 hardware 包，并注释本文件
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  - id: bus_a
+    sda: 15
+    scl: 7
+    scan: true
+    frequency: 100kHz
+    timeout: 10ms

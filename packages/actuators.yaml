@@ -1,0 +1,580 @@
+# 三路 35BYJ-46 + ULN2003，经 MCP23017@bus_a 驱动
+#
+# 风阀模型（固定角度）：
+#   - 关：步数 0（归零后的坐标原点）
+#   - 开：每路独立固定步数（substitutions / HA number 标定）
+#   - 无限位开关时：靠「关向机械硬挡块 + 堵转寻零」或「手动确认置零」
+#
+# 归零模式 valve_home_mode（在 air-exchange.yaml substitutions 中设置）：
+#   stall  — 默认。上电向关方向走满 seek 步，顶死挡块后超时，再置 0（需机械关死位）
+#   manual — 不自动动，须按「风阀确认已关闭」后置 0
+#   limit  — 接关限位开关到 MCP 12/13/14 时用（见本文件末尾注释块）
+#
+# 进风另含摆风：仅在 swing_low ↔ swing_high，停摆后回开阀角
+
+substitutions:
+  # valve_home_mode 由 air-exchange.yaml 提供；此处默认仅作包单独测试用
+  # ---------- 关位：归零后均为 0，勿改 ----------
+  intake_steps_closed: "0"
+  exhaust_steps_closed: "0"
+  mix_steps_closed: "0"
+
+  # ---------- 开位：按实际机械角度分别标定（示例值，装好后用 number 微调）----------
+  intake_steps_open: "240"       # 进风阀全开角
+  exhaust_steps_open: "195"      # 排风阀全开角
+  mix_steps_open: "128"          # 混风阀全开角
+
+  # ---------- 进风摆风（须满足 0 < low < open < high 或 low/high 在 open 附近摆动）----------
+  intake_swing_low: "200"
+  intake_swing_high: "270"
+  intake_swing_period: "4s"
+
+  stepper_max_speed: "140 steps/s"
+  stepper_accel: "280 steps/s^2"
+  stepper_home_speed: "80 steps/s"
+  # 关方向寻零行程，应大于「关→全开」步数，略小于一圈
+  stepper_home_seek_steps: "4096"
+  stepper_home_timeout: "25s"
+  # stall 模式：关向为负步数；若顶死方向反了，改为正数并在三路 home 脚本里改符号
+  stepper_home_close_sign: "-1"
+
+mcp23017:
+  - id: mcp_valves
+    i2c_id: bus_a
+    address: ${mcp_valves_address}
+
+stepper:
+  - platform: uln2003
+    id: stepper_intake
+    sleep_when_done: true
+    step_mode: FULL_STEP
+    max_speed: ${stepper_max_speed}
+    acceleration: ${stepper_accel}
+    deceleration: ${stepper_accel}
+    pin_a:
+      mcp23xxx: mcp_valves
+      number: 0
+    pin_b:
+      mcp23xxx: mcp_valves
+      number: 1
+    pin_c:
+      mcp23xxx: mcp_valves
+      number: 2
+    pin_d:
+      mcp23xxx: mcp_valves
+      number: 3
+
+  - platform: uln2003
+    id: stepper_exhaust
+    sleep_when_done: true
+    step_mode: FULL_STEP
+    max_speed: ${stepper_max_speed}
+    acceleration: ${stepper_accel}
+    deceleration: ${stepper_accel}
+    pin_a:
+      mcp23xxx: mcp_valves
+      number: 4
+    pin_b:
+      mcp23xxx: mcp_valves
+      number: 5
+    pin_c:
+      mcp23xxx: mcp_valves
+      number: 6
+    pin_d:
+      mcp23xxx: mcp_valves
+      number: 7
+
+  - platform: uln2003
+    id: stepper_mix
+    sleep_when_done: true
+    step_mode: FULL_STEP
+    max_speed: ${stepper_max_speed}
+    acceleration: ${stepper_accel}
+    deceleration: ${stepper_accel}
+    pin_a:
+      mcp23xxx: mcp_valves
+      number: 8
+    pin_b:
+      mcp23xxx: mcp_valves
+      number: 9
+    pin_c:
+      mcp23xxx: mcp_valves
+      number: 10
+    pin_d:
+      mcp23xxx: mcp_valves
+      number: 11
+
+globals:
+  - id: valve_home_mode_stall
+    type: bool
+    initial_value: "true"
+  - id: valve_home_mode_manual
+    type: bool
+    initial_value: "false"
+  - id: valve_home_mode_limit
+    type: bool
+    initial_value: "false"
+  - id: intake_swing_enabled
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: intake_swing_phase_high
+    type: bool
+    initial_value: "false"
+  - id: intake_valve_open
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: exhaust_valve_open
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: mix_valve_open
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: valves_homed
+    type: bool
+    initial_value: "false"
+
+switch:
+  - platform: template
+    name: "intake_swing"
+    id: switch_intake_swing
+    icon: mdi:arrow-up-down
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - script.execute: intake_swing_start
+    turn_off_action:
+      - script.execute: intake_swing_stop
+
+button:
+  - platform: template
+    name: "valves_rehome"
+    id: btn_valves_rehome
+    icon: mdi:axis-z-rotate-clockwise
+    on_press:
+      - script.execute: valves_boot
+
+  - platform: template
+    name: "valves_manual_zero"
+    id: btn_valves_manual_zero
+    icon: mdi:valve-closed
+    on_press:
+      - script.execute: valves_manual_zero
+
+# 可选：Home Assistant 里在线微调开阀步数（标定后写入 substitutions 固化）
+number:
+  - platform: template
+    name: "intake_valve_open_steps"
+    id: num_intake_open
+    optimistic: true
+    restore_value: true
+    initial_value: ${intake_steps_open}
+    min_value: 1
+    max_value: 3500
+    step: 1
+    mode: box
+    entity_category: config
+    set_action:
+      - stepper.set_target:
+          id: stepper_intake
+          target: !lambda "return (int)x;"
+
+  - platform: template
+    name: "exhaust_valve_open_steps"
+    id: num_exhaust_open
+    optimistic: true
+    restore_value: true
+    initial_value: ${exhaust_steps_open}
+    min_value: 1
+    max_value: 3500
+    step: 1
+    mode: box
+    entity_category: config
+    set_action:
+      - stepper.set_target:
+          id: stepper_exhaust
+          target: !lambda "return (int)x;"
+
+  - platform: template
+    name: "mix_valve_open_steps"
+    id: num_mix_open
+    optimistic: true
+    restore_value: true
+    initial_value: ${mix_steps_open}
+    min_value: 1
+    max_value: 3500
+    step: 1
+    mode: box
+    entity_category: config
+    set_action:
+      - stepper.set_target:
+          id: stepper_mix
+          target: !lambda "return (int)x;"
+
+script:
+  - id: valves_apply_home_mode
+    mode: single
+    then:
+      - lambda: |-
+          const char *m = "${valve_home_mode}";
+          id(valve_home_mode_stall) = (strcmp(m, "stall") == 0);
+          id(valve_home_mode_manual) = (strcmp(m, "manual") == 0);
+          id(valve_home_mode_limit) = (strcmp(m, "limit") == 0);
+          if (!id(valve_home_mode_stall) && !id(valve_home_mode_manual) && !id(valve_home_mode_limit)) {
+            ESP_LOGW("valve", "未知 valve_home_mode=%s，回退为 stall", m);
+            id(valve_home_mode_stall) = true;
+          }
+
+  - id: valves_manual_zero
+    then:
+      - script.execute: intake_swing_stop
+      - stepper.set_target:
+          id: stepper_intake
+          target: ${intake_steps_closed}
+      - stepper.set_target:
+          id: stepper_exhaust
+          target: ${exhaust_steps_closed}
+      - stepper.set_target:
+          id: stepper_mix
+          target: ${mix_steps_closed}
+      - stepper.report_position:
+          id: stepper_intake
+          position: ${intake_steps_closed}
+      - stepper.report_position:
+          id: stepper_exhaust
+          position: ${exhaust_steps_closed}
+      - stepper.report_position:
+          id: stepper_mix
+          position: ${mix_steps_closed}
+      - globals.set:
+          id: intake_valve_open
+          value: "false"
+      - globals.set:
+          id: exhaust_valve_open
+          value: "false"
+      - globals.set:
+          id: mix_valve_open
+          value: "false"
+      - globals.set:
+          id: valves_homed
+          value: "true"
+      - logger.log:
+          format: "已手动置零（未驱动电机，请确认三阀已在关位）"
+
+  - id: intake_home_stall
+    mode: restart
+    then:
+      - globals.set:
+          id: intake_swing_enabled
+          value: "false"
+      - script.stop: intake_swing_loop
+      - stepper.set_speed:
+          id: stepper_intake
+          speed: ${stepper_home_speed}
+      - stepper.set_target:
+          id: stepper_intake
+          target: !lambda "return ${stepper_home_close_sign} * ${stepper_home_seek_steps};"
+      - wait_until:
+          timeout: ${stepper_home_timeout}
+          condition:
+            lambda: |-
+              return id(stepper_intake).current_position == id(stepper_intake).target_position;
+      - stepper.set_target:
+          id: stepper_intake
+          target: ${intake_steps_closed}
+      - stepper.report_position:
+          id: stepper_intake
+          position: ${intake_steps_closed}
+      - stepper.set_speed:
+          id: stepper_intake
+          speed: ${stepper_max_speed}
+      - globals.set:
+          id: intake_valve_open
+          value: "false"
+
+  - id: exhaust_home_stall
+    mode: restart
+    then:
+      - stepper.set_speed:
+          id: stepper_exhaust
+          speed: ${stepper_home_speed}
+      - stepper.set_target:
+          id: stepper_exhaust
+          target: !lambda "return ${stepper_home_close_sign} * ${stepper_home_seek_steps};"
+      - wait_until:
+          timeout: ${stepper_home_timeout}
+          condition:
+            lambda: |-
+              return id(stepper_exhaust).current_position == id(stepper_exhaust).target_position;
+      - stepper.set_target:
+          id: stepper_exhaust
+          target: ${exhaust_steps_closed}
+      - stepper.report_position:
+          id: stepper_exhaust
+          position: ${exhaust_steps_closed}
+      - stepper.set_speed:
+          id: stepper_exhaust
+          speed: ${stepper_max_speed}
+      - globals.set:
+          id: exhaust_valve_open
+          value: "false"
+
+  - id: mix_home_stall
+    mode: restart
+    then:
+      - stepper.set_speed:
+          id: stepper_mix
+          speed: ${stepper_home_speed}
+      - stepper.set_target:
+          id: stepper_mix
+          target: !lambda "return ${stepper_home_close_sign} * ${stepper_home_seek_steps};"
+      - wait_until:
+          timeout: ${stepper_home_timeout}
+          condition:
+            lambda: |-
+              return id(stepper_mix).current_position == id(stepper_mix).target_position;
+      - stepper.set_target:
+          id: stepper_mix
+          target: ${mix_steps_closed}
+      - stepper.report_position:
+          id: stepper_mix
+          position: ${mix_steps_closed}
+      - stepper.set_speed:
+          id: stepper_mix
+          speed: ${stepper_max_speed}
+      - globals.set:
+          id: mix_valve_open
+          value: "false"
+
+  - id: intake_home
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: "return id(valve_home_mode_stall);"
+          then:
+            - script.execute: intake_home_stall
+          else:
+            - if:
+                condition:
+                  lambda: "return id(valve_home_mode_manual);"
+                then:
+                  - logger.log:
+                      format: "进风阀：manual 模式跳过自动寻零"
+                else:
+                  - logger.log:
+                      level: ERROR
+                      format: "进风阀：limit 模式需接关限位，见 actuators.yaml 文末说明"
+
+  - id: exhaust_home
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: "return id(valve_home_mode_stall);"
+          then:
+            - script.execute: exhaust_home_stall
+          else:
+            - if:
+                condition:
+                  lambda: "return id(valve_home_mode_manual);"
+                then:
+                  - logger.log:
+                      format: "排风阀：manual 模式跳过自动寻零"
+                else:
+                  - logger.log:
+                      level: ERROR
+                      format: "排风阀：limit 模式需接关限位"
+
+  - id: mix_home
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: "return id(valve_home_mode_stall);"
+          then:
+            - script.execute: mix_home_stall
+          else:
+            - if:
+                condition:
+                  lambda: "return id(valve_home_mode_manual);"
+                then:
+                  - logger.log:
+                      format: "混风阀：manual 模式跳过自动寻零"
+                else:
+                  - logger.log:
+                      level: ERROR
+                      format: "混风阀：limit 模式需接关限位"
+
+  - id: intake_valve_open_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - script.execute: intake_swing_stop
+            - stepper.set_target:
+                id: stepper_intake
+                target: !lambda "return (int)id(num_intake_open).state;"
+            - globals.set:
+                id: intake_valve_open
+                value: "true"
+
+  - id: intake_valve_close_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - script.execute: intake_swing_stop
+            - stepper.set_target:
+                id: stepper_intake
+                target: ${intake_steps_closed}
+            - globals.set:
+                id: intake_valve_open
+                value: "false"
+
+  - id: exhaust_valve_open_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - stepper.set_target:
+                id: stepper_exhaust
+                target: !lambda "return (int)id(num_exhaust_open).state;"
+            - globals.set:
+                id: exhaust_valve_open
+                value: "true"
+
+  - id: exhaust_valve_close_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - stepper.set_target:
+                id: stepper_exhaust
+                target: ${exhaust_steps_closed}
+            - globals.set:
+                id: exhaust_valve_open
+                value: "false"
+
+  - id: mix_valve_open_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - stepper.set_target:
+                id: stepper_mix
+                target: !lambda "return (int)id(num_mix_open).state;"
+            - globals.set:
+                id: mix_valve_open
+                value: "true"
+
+  - id: mix_valve_close_script
+    then:
+      - if:
+          condition:
+            lambda: "return id(valves_homed);"
+          then:
+            - stepper.set_target:
+                id: stepper_mix
+                target: ${mix_steps_closed}
+            - globals.set:
+                id: mix_valve_open
+                value: "false"
+
+  - id: intake_swing_start
+    then:
+      - if:
+          condition:
+            lambda: "return !id(valves_homed) || !id(intake_valve_open);"
+          then:
+            - switch.turn_off: switch_intake_swing
+          else:
+            - globals.set:
+                id: intake_swing_enabled
+                value: "true"
+            - script.execute: intake_swing_loop
+
+  - id: intake_swing_stop
+    then:
+      - globals.set:
+          id: intake_swing_enabled
+          value: "false"
+      - script.stop: intake_swing_loop
+      - if:
+          condition:
+            lambda: "return id(valves_homed) && id(intake_valve_open);"
+          then:
+            - stepper.set_target:
+                id: stepper_intake
+                target: !lambda "return (int)id(num_intake_open).state;"
+
+  - id: intake_swing_loop
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: "return id(intake_swing_enabled);"
+          then:
+            - if:
+                condition:
+                  lambda: "return !id(intake_swing_phase_high);"
+                then:
+                  - stepper.set_target:
+                      id: stepper_intake
+                      target: ${intake_swing_low}
+                  - lambda: "id(intake_swing_phase_high) = true;"
+                else:
+                  - stepper.set_target:
+                      id: stepper_intake
+                      target: ${intake_swing_high}
+                  - lambda: "id(intake_swing_phase_high) = false;"
+            - delay: ${intake_swing_period}
+
+  - id: valves_boot
+    mode: single
+    then:
+      - script.execute: valves_apply_home_mode
+      - globals.set:
+          id: valves_homed
+          value: "false"
+      - delay: 2s
+      - if:
+          condition:
+            lambda: "return id(valve_home_mode_manual);"
+          then:
+            - logger.log:
+                format: "manual 模式：请确认三阀关闭后点「风阀确认已关闭」"
+          else:
+            - script.execute: intake_home
+            - script.execute: exhaust_home
+            - script.execute: mix_home
+            - globals.set:
+                id: valves_homed
+                value: "true"
+            - logger.log:
+                format: "Valves homed at 0. Open steps: intake %.0f exhaust %.0f mix %.0f"
+                args:
+                  - !lambda "return id(num_intake_open).state;"
+                  - !lambda "return id(num_exhaust_open).state;"
+                  - !lambda "return id(num_mix_open).state;"
+
+esphome:
+  on_boot:
+    - priority: -200
+      then:
+        - script.execute: valves_apply_home_mode
+    - priority: -100
+      then:
+        - script.execute: valves_boot
+
+# ----- 可选：limit 模式 — 取消下方注释，并设 valve_home_mode: "limit" -----
+# 同时恢复 binary_sensor（MCP 12/13/14）并在 *_home 中改用 wait_until + 限位。
+# 参见 git 历史或 Waveshare 项目文档。

@@ -1,0 +1,23 @@
+# LVGL 页面骨架
+
+substitutions:
+  ui_page_layout: "4x4"
+
+lvgl:
+  pages:
+    - id: main_page
+      layout: ${ui_page_layout}
+      styles: page_style
+      <<: !include ${lvgl_lib}/common/swipe_navigation.yaml
+
+    - id: ctrl_page
+      layout: 3x2
+      styles: page_style
+      <<: !include ${lvgl_lib}/common/swipe_navigation.yaml
+      widgets:
+        - label:
+            align: top_mid
+            y: 4
+            text_font: $text_font
+            text_color: $label_on_color
+            text: "送风 / 排风"

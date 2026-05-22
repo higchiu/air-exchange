@@ -1,0 +1,39 @@
+# 新风机联锁：开阀 → 送风/排风按设定转速运行 → 关机先停风机 → 关阀
+
+button:
+  - platform: template
+    name: "erv_start"
+    id: btn_erv_start
+    icon: mdi:fan
+    on_press:
+      - script.execute: erv_start
+
+  - platform: template
+    name: "erv_stop"
+    id: btn_erv_stop
+    icon: mdi:fan-off
+    on_press:
+      - script.execute: erv_stop
+
+script:
+  - id: erv_start
+    then:
+      - script.execute: intake_valve_open_script
+      - script.execute: exhaust_valve_open_script
+      - delay: 6s
+      - script.execute: fans_apply_configured_speeds
+      - if:
+          condition:
+            switch.is_on: switch_intake_swing
+          then:
+            - script.execute: intake_swing_start
+
+  - id: erv_stop
+    then:
+      - script.execute: intake_swing_stop
+      - switch.turn_off: switch_intake_swing
+      - script.execute: fans_turn_off
+      - delay: 30s
+      - script.execute: intake_valve_close_script
+      - script.execute: exhaust_valve_close_script
+      - script.execute: mix_valve_close_script

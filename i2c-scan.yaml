@@ -1,0 +1,16 @@
+# 用于确认开发板 V3 / V4，见 README.md「开发板版本」一节
+esphome:
+  name: i2c-scan-test
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+
+logger:
+  level: DEBUG
+
+i2c:
+  - sda: 15
+    scl: 7
+    scan: true
+    frequency: 100kHz

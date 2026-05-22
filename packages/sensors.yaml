@@ -1,0 +1,53 @@
+# 温湿度 / CO2 / PM2.5
+# I2C：bus_a（硬件包 GPIO15/7）  UART：GPIO43/44（硬件包外需与下方一致）
+
+uart:
+  - id: uart_pms
+    tx_pin: ${uart_pms_tx_pin}
+    rx_pin: ${uart_pms_rx_pin}
+    baud_rate: 9600
+
+sensor:
+  - platform: sht3xd
+    i2c_id: bus_a
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      name: "sht_indoor_temp"
+      id: temp_indoor
+    humidity:
+      name: "sht_indoor_humidity"
+      id: humidity_indoor
+
+  - platform: sht3xd
+    i2c_id: bus_a
+    address: 0x45
+    update_interval: 30s
+    temperature:
+      name: "sht_outdoor_temp"
+      id: temp_outdoor
+    humidity:
+      name: "sht_outdoor_humidity"
+      id: humidity_outdoor
+
+  - platform: scd30
+    i2c_id: bus_a
+    address: 0x61
+    update_interval: 30s
+    co2:
+      name: "scd30_co2"
+      id: co2_indoor
+    temperature:
+      name: "scd30_temp"
+      internal: true
+    humidity:
+      name: "scd30_humidity"
+      internal: true
+
+  - platform: pmsx003
+    type: PMS5003S
+    uart_id: uart_pms
+    update_interval: 60s
+    pm_2_5:
+      name: "pms5003_pm25"
+      id: pm25

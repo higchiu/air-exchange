@@ -1,0 +1,12 @@
+# 风机 CLK/FG、PMS UART（air-exchange.yaml 与 air-exchange-display.yaml 通过 package 引用）
+# 48F704P400：GPIO PWM → 蓝 CLK；GPIO ← 橙 FG
+
+substitutions:
+  fan_supply_pwm_pin: "GPIO4"
+  fan_supply_tach_pin: "GPIO6"
+  fan_exhaust_pwm_pin: "GPIO0"
+  fan_exhaust_tach_pin: "GPIO16"
+  fan_supply_default_speed: "70"
+  fan_exhaust_default_speed: "50"
+  uart_pms_tx_pin: "GPIO44"
+  uart_pms_rx_pin: "GPIO43"
