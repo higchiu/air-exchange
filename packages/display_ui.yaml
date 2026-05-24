@@ -1,4 +1,5 @@
-# LVGL 页面骨架
+# LVGL 页面：main_page 使用 bg.png 自定义布局（见 packages/main_page_*.yaml）
+# 副页 ctrl_page 仍为网格按钮
 
 substitutions:
   ui_page_layout: "4x4"
@@ -6,14 +7,14 @@ substitutions:
 lvgl:
   pages:
     - id: main_page
-      layout: ${ui_page_layout}
+      layout: NONE
       styles: page_style
-      <<: !include ${lvgl_lib}/common/swipe_navigation.yaml
+      <<: !include ../esphome-modular-lvgl-buttons/common/swipe_navigation.yaml
 
     - id: ctrl_page
       layout: 3x2
       styles: page_style
-      <<: !include ${lvgl_lib}/common/swipe_navigation.yaml
+      <<: !include ../esphome-modular-lvgl-buttons/common/swipe_navigation.yaml
       widgets:
         - label:
             align: top_mid

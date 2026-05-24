@@ -1,0 +1,228 @@
+# main_page：bg.png 背景 + element.jpg 标注的控件位置（480×480）
+# 布局参考图：assets/element.jpg
+
+lvgl:
+  pages:
+    - id: !extend main_page
+      layout: NONE
+      widgets:
+        # ── 背景（铺满）──
+        - image:
+            id: main_bg_widget
+            src: main_bg_img
+            x: 0
+            y: 0
+            width: 480
+            height: 480
+
+        # ── 顶部：Wi-Fi（左） / 时间（右）──
+        - label:
+            id: lbl_wifi_icon
+            x: 22
+            y: 16
+            text_font: $icon_font
+            text_color: panel_text
+            text: $mdi_wifi
+        - label:
+            id: lbl_clock
+            x: 248
+            y: 14
+            width: 220
+            text_align: right
+            text_font: font_cn_18
+            text_color: panel_text
+            text: "--月--日 --:--"
+
+        # ── 室内：标签 + 温湿度（element 左上）──
+        - label:
+            id: lbl_indoor_tag
+            x: 92
+            y: 74
+            text_font: font_cn_18
+            text_color: panel_text
+            text: "室内"
+        - label:
+            id: lbl_in_temp_icon
+            x: 108
+            y: 104
+            text_font: $icon_font
+            text_color: panel_text
+            text: $mdi_thermometer
+        - label:
+            id: lbl_in_temp
+            x: 148
+            y: 102
+            text_font: nunito_24
+            text_color: panel_text
+            text: "--°C"
+        - label:
+            id: lbl_in_hum_icon
+            x: 218
+            y: 104
+            text_font: $icon_font
+            text_color: panel_text
+            text: $mdi_water_percent
+        - label:
+            id: lbl_in_hum
+            x: 252
+            y: 102
+            text_font: nunito_24
+            text_color: panel_text
+            text: "--%"
+
+        # ── 室内：PM2.5 / CO2 / TVOC 圆角徽章（绿黄红由脚本刷新）──
+        - obj:
+            id: badge_in_pm25
+            x: 52
+            y: 148
+            width: 112
+            height: 112
+            radius: 56
+            bg_color: aqi_green
+            border_width: 0
+            widgets:
+              - label:
+                  id: lbl_in_pm25_val
+                  align: center
+                  y: -10
+                  text_font: nunito_42
+                  text_color: white
+                  text: "--"
+              - label:
+                  id: lbl_in_pm25_cap
+                  align: center
+                  y: 28
+                  text_font: nunito_20
+                  text_color: white
+                  text: "PM2.5"
+
+        - obj:
+            id: badge_in_co2
+            x: 208
+            y: 148
+            width: 112
+            height: 112
+            radius: 56
+            bg_color: aqi_yellow
+            border_width: 0
+            widgets:
+              - label:
+                  id: lbl_in_co2_val
+                  align: center
+                  y: -10
+                  text_font: nunito_42
+                  text_color: white
+                  text: "--"
+              - label:
+                  id: lbl_in_co2_cap
+                  align: center
+                  y: 28
+                  text_font: nunito_20
+                  text_color: white
+                  text: "CO2"
+
+        - obj:
+            id: badge_in_tvoc
+            x: 52
+            y: 272
+            width: 112
+            height: 112
+            radius: 56
+            bg_color: aqi_green
+            border_width: 0
+            widgets:
+              - label:
+                  id: lbl_in_tvoc_val
+                  align: center
+                  y: -10
+                  text_font: nunito_42
+                  text_color: white
+                  text: "--"
+              - label:
+                  id: lbl_in_tvoc_cap
+                  align: center
+                  y: 28
+                  text_font: font_cn_14
+                  text_color: white
+                  text: "TVOC等级"
+
+        # ── 室外：右侧胶囊区（element 右栏）──
+        - label:
+            id: lbl_outdoor_tag
+            x: 358
+            y: 88
+            text_font: font_cn_18
+            text_color: panel_text
+            text: "室外"
+        - label:
+            id: lbl_out_temp_icon
+            x: 352
+            y: 122
+            text_font: $icon_font
+            text_color: panel_text
+            text: $mdi_thermometer
+        - label:
+            id: lbl_out_temp
+            x: 388
+            y: 120
+            text_font: nunito_24
+            text_color: panel_text
+            text: "--°C"
+        - label:
+            id: lbl_out_hum_icon
+            x: 352
+            y: 158
+            text_font: $icon_font
+            text_color: panel_text
+            text: $mdi_water_percent
+        - label:
+            id: lbl_out_hum
+            x: 388
+            y: 156
+            text_font: nunito_24
+            text_color: panel_text
+            text: "--%"
+
+        - obj:
+            id: badge_out_pm25
+            x: 362
+            y: 218
+            width: 88
+            height: 88
+            radius: 44
+            bg_color: aqi_yellow
+            border_width: 0
+            widgets:
+              - label:
+                  id: lbl_out_pm25_val
+                  align: center
+                  y: -8
+                  text_font: nunito_36
+                  text_color: white
+                  text: "--"
+              - label:
+                  id: lbl_out_pm25_cap
+                  align: center
+                  y: 22
+                  text_font: nunito_20
+                  text_color: white
+                  text: "PM2.5"
+
+        # 透明热区：进入副页（送/排风调节）；左右滑也可切页
+        - button:
+            id: btn_main_more
+            x: 400
+            y: 430
+            width: 72
+            height: 44
+            bg_opa: transp
+            border_width: 0
+            shadow_width: 0
+            widgets:
+              - label:
+                  align: center
+                  text_font: nunito_20
+                  text_color: panel_text_dim
+                  text: "More"
+            on_short_click:
+              - lvgl.page.show: ctrl_page

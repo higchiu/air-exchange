@@ -1,0 +1,19 @@
+# 室内 TVOC 等级（1–6）。优先从 HA 订阅；无实体时在 HA 建 template 或改 entity_id。
+sensor:
+  - platform: homeassistant
+    id: tvoc_ha_raw
+    entity_id: !secret tvoc_entity_id
+    internal: true
+
+  - platform: template
+    id: tvoc_level
+    name: "tvoc_level"
+    unit_of_measurement: "级"
+    accuracy_decimals: 0
+    internal: true
+    update_interval: 60s
+    lambda: |-
+      if (!id(tvoc_ha_raw).has_state()) return NAN;
+      return id(tvoc_ha_raw).state;
+    on_value:
+      - script.execute: main_page_refresh

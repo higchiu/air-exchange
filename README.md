@@ -17,6 +17,7 @@
 |------|------|------|
 | ESP32 + I2C 总线 | ✅ | `packages/hardware_bus.yaml` |
 | 传感器 SHT31×2 / SCD30 / PMS5003 | ✅ | `packages/sensors.yaml` |
+| 同城 PM2.5（HA 联网） | ✅ | `packages/city_pm25.yaml` |
 | 送风/排风 24V 风机 | ✅ | `packages/fan.yaml` |
 | 三路风阀 + 进风摆风 + 归零 | ✅ | `packages/actuators.yaml` |
 | 启停联锁脚本 + HA 按钮 | ✅ | `packages/erv_interlock.yaml` |
@@ -48,33 +49,55 @@ air-exchange/
     ├── fan.yaml
     ├── actuators.yaml
     ├── erv_interlock.yaml
+    ├── city_pm25.yaml           # 从 HA 订阅同城 PM2.5
     └── pinmap.yaml              # 风机/PMS 引脚（两主 yaml 共用）
 ```
 
 ---
 
-## LVGL 触控界面（简易初版）
+## 显示分辨率（固定 480×480）
 
-烧录 **`air-exchange-display.yaml`**。
+线控/触控面板仅支持 **480×480** 像素。固件里 `screen_width` / `screen_height` 已为 `"480"`（见 `air-exchange.yaml`、`air-exchange-display.yaml`）；LVGL 布局、切图、预览图均按此尺寸设计，勿用其它比例。
 
-1. 克隆 [esphome-modular-lvgl-buttons](https://github.com/agillis/esphome-modular-lvgl-buttons) 到与 `air-exchange` **同级**目录。
-2. 路径不对时改 `lvgl_lib: "../esphome-modular-lvgl-buttons"`。
-3. V3 板：`board_hw: waveshare-esp32-s3-touch-lcd-4`，`mcp_valves_address: "0x21"`。
+界面 mockup（**原生 480×480**，与 `air-exchange` 功能一致：全热交换 / 启动·停止·摆风 / 送排风%；可改 `panel-ui-480.html` 后重新导出）：
 
-**主页 4×4**（左右滑到副页）：
+- 导出图：[`assets/air-exchange-panel-480x480.png`](assets/air-exchange-panel-480x480.png)
+- 可编辑源稿：[`assets/panel-ui-480.html`](assets/panel-ui-480.html)（改文案/数值后用 Chrome 无头截图）
 
-| | 0 | 1 | 2 | 3 |
-|--|---|---|---|---|
-| 0 | CO₂ | PM2.5 | 室内温 | 室外温 |
-| 1 | 室内湿 | 室外湿 | 启动 | 停止 |
-| 2 | 摆风 | 归零 | 置零 | 更多→ |
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new --window-size=480,480 --force-device-scale-factor=1 \
+  --screenshot=assets/air-exchange-panel-480x480.png \
+  "file://$(pwd)/assets/panel-ui-480.html"
+```
 
-**副页**：送风/排风 ±10%、返回、系统信息。
+## LVGL 触控界面
+
+烧录 **`air-exchange-display.yaml`**（需 ESPHome **≥ 2026.4**，V4 板 CH32 组件）。
+
+1. 本仓库已含 `vendor/esphome-modular-lvgl-buttons`，根目录有符号链接 `esphome-modular-lvgl-buttons`（主题字体路径依赖此名）。
+2. 亦可自行克隆到同级，并创建同名符号链接。
+3. V3 板：改 `hardware` 为 `waveshare-esp32-s3-touch-lcd-4.yaml`，`mcp_valves_address: "0x21"`。
+
+### main_page（日立风格）
+
+| 资源 | 说明 |
+|------|------|
+| [`assets/bg.png`](assets/bg.png) | 全屏背景（烧录用，缩放到 480×480） |
+| [`assets/element.jpg`](assets/element.jpg) | 控件位置对照图（**仅文档**，不进固件） |
+| [`assets/UI_LAYOUT.md`](assets/UI_LAYOUT.md) | 坐标、配色阈值、待做底部按钮 |
+
+**已实现**：顶栏 Wi-Fi + 时间；室内温湿度 / PM2.5 / CO₂ / TVOC 等级（绿黄红圆章）；室外温湿度 + 同城 PM2.5。
+
+固件包：`packages/main_page_assets.yaml`、`main_page_ui.yaml`、`main_page_logic.yaml`。
+
+**副页 `ctrl_page`**：送风/排风 ±10%；`main_page` 右下角 **More** 或左右滑动进入。
 
 | 想改 | 文件 |
 |------|------|
-| 磁贴位置/文字 | `air-exchange-display.yaml` 里各 `ui_*` 的 `row` `column` `text` |
-| 副页 | `packages/display_ui.yaml` |
+| 控件坐标 / 文案 | `packages/main_page_ui.yaml` |
+| 配色阈值 | `packages/main_page_logic.yaml` |
+| 副页按钮 | `air-exchange-display.yaml` 底部 `ui_fan_*` |
 
 ```bash
 esphome run air-exchange-display.yaml
@@ -328,12 +351,60 @@ HA 中（实体 ID，可在 HA 改友好名）：
 
 ---
 
+## 同城 PM2.5（联网）
+
+ESPHome **不自带**「按城市查 PM2.5」接口；推荐在 **Home Assistant** 里先接入同城空气质量，再由 ESP 通过 Native API 订阅显示。
+
+| 数据 | 来源 | ESP 实体 `id` |
+|------|------|----------------|
+| 室内实测 | 本机 PMS5003 | `pm25` |
+| 同城联网 | HA 里已有传感器 | `pm25_city` |
+
+### 1. 在 Home Assistant 获取同城 PM2.5
+
+任选一种（需能拿到 **µg/m³** 数值型 `sensor.*`）：
+
+| 方式 | 说明 |
+|------|------|
+| **和风天气** | 设置 → 设备与服务 → 添加「Qweather / 和风天气」→ 填 API Key 与所在城市 → 会出现 PM2.5 类传感器 |
+| **Open-Meteo** | 集成按经纬度提供空气质量（含 PM2.5） |
+| **WAQI** | [World Air Quality Index](https://waqi.info/)，选离你最近的监测站 |
+| **其它** | 各省环保、第三方 HACS 集成，只要最终在 HA 里是 `sensor.xxx` 即可 |
+
+在 HA：**设置 → 实体** 里找到 PM2.5 实体，复制 **实体 ID**（例如 `sensor.shanghai_pm2_5`）。
+
+### 2. 写入 ESP 的 secrets
+
+`secrets.yaml`（由 `secrets.yaml.example` 复制）增加：
+
+```yaml
+city_pm25_entity_id: "sensor.shanghai_pm2_5"   # 改成你的实体 ID
+```
+
+固件已 `!include packages/city_pm25.yaml`（`air-exchange.yaml` / `air-exchange-display.yaml`）。
+
+### 3. 屏上显示（带 LVGL 时）
+
+主页右上角磁贴 **City PM** 绑定 `pm25_city`；左上角 **In PM** 仍是本机 PMS5003。
+
+室外 **SHT31 温湿度** 仍在「Out RH」等磁贴；室外 **温度** 可在 HA 看 `sht_outdoor_temp`（主页 4×4 格已满，未单独占一格）。
+
+### 4. 无 Home Assistant 时
+
+同城数据需 ESP 自己 `http_request` 调 OpenWeather **Air Pollution** 等 API（要 API Key + 经纬度，且占 RAM）。本仓库默认走 HA 路径；若你坚持单机联网，可再开 issue 加 `packages/city_pm25_owm.yaml` 示例。
+
+### 5. 与新风逻辑配合（示例）
+
+在 HA 自动化：同城 PM2.5 低且室内 CO₂ 高 → `erv_start`；同城很差 → 保持 `erv_stop` 或降低进风量（按你阀位策略）。
+
+---
+
 ## 外设概要
 
 | 类别 | 器件 |
 |------|------|
 | 显示 | 4″ 480×480 LVGL（需 modular-lvgl，未含界面） |
-| 环境 | SHT31 室内/外、SCD30 CO₂、PMS5003 PM2.5 |
+| 环境 | SHT31 室内/外、SCD30 CO₂、PMS5003 室内 PM2.5、HA 同城 PM2.5 |
 | 执行 | 送风/排风 ECM（如 48F704P400，CLK/FG）；35BYJ×3 + ULN2003；MCP23017 |
 | 风阀 | 固定关 0 / 各自开角；默认挡块寻零 |
 

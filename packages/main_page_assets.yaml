@@ -1,0 +1,37 @@
+# main_page 资源：背景图、中文字体、配色
+
+image:
+  - file: assets/bg.png
+    id: main_bg_img
+    resize: 480x480
+    type: RGB565
+
+color:
+  - id: aqi_green
+    hex: "7ACF38"
+  - id: aqi_yellow
+    hex: "F4A900"
+  - id: aqi_red
+    hex: "F5075C"
+  - id: panel_text
+    hex: "4A6B8A"
+  - id: panel_text_dim
+    hex: "6A8AA8"
+
+font:
+  # 顶部时间、室内/室外标签（element.jpg 标注位置）
+  - file: "gfonts://Noto%20Sans%20SC"
+    id: font_cn_18
+    size: 18
+    bpp: 4
+    glyphs: "月日时分室内室外等级温湿度"
+  - file: "gfonts://Noto%20Sans%20SC"
+    id: font_cn_14
+    size: 14
+    bpp: 4
+    glyphs: "月日时分室内室外等级温湿度"
+  - file: "gfonts://Noto%20Sans%20SC"
+    id: font_cn_22
+    size: 22
+    bpp: 4
+    glyphs: "月日时分室内室外等级温湿度"

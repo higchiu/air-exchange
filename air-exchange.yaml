@@ -44,5 +44,6 @@ packages:
   fan_pkg: !include packages/fan.yaml
   actuators_pkg: !include packages/actuators.yaml
   interlock_pkg: !include packages/erv_interlock.yaml
+  city_pm25_pkg: !include packages/city_pm25.yaml
 
   # wifi/theme/lvgl 等按需从 modular-lvgl-buttons 追加

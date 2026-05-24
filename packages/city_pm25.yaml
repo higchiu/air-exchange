@@ -1,0 +1,17 @@
+# 同城 PM2.5（联网）：从 Home Assistant 订阅已有空气质量实体
+# 前置：HA 里已配置和风 / Open-Meteo / WAQI 等，并记下 entity_id（见 README § 同城 PM2.5）
+# 设备须已接入 HA Native API（air-exchange.yaml 里 api: 已启用）
+
+sensor:
+  - platform: homeassistant
+    id: pm25_city
+    entity_id: !secret city_pm25_entity_id
+    name: "pm25_city"
+    unit_of_measurement: "µg/m³"
+    accuracy_decimals: 0
+    internal: true
+    # 同城站点更新较慢，避免频繁向 HA 拉取
+    filters:
+      - throttle: 5min
+    on_value:
+      - script.execute: main_page_refresh

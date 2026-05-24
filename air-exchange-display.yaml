@@ -1,15 +1,13 @@
 # 带 LVGL 触控屏的完整配置（Waveshare 4" 480×480）
 # 用法：
-#   1. 将 esphome-modular-lvgl-buttons 克隆到与本目录同级：
-#        ../esphome-modular-lvgl-buttons
-#   2. 若路径不同，改 substitutions.lvgl_lib
-#   3. esphome run air-exchange-display.yaml
+#   1. 使用本仓库 vendor/esphome-modular-lvgl-buttons，或克隆到同级并改 lvgl_lib
+#   2. esphome run air-exchange-display.yaml
 #
 # 无屏调试请用 air-exchange.yaml
 
 substitutions:
-  # 相对本 yaml 所在目录；库在别处请改此路径
-  lvgl_lib: "../esphome-modular-lvgl-buttons"
+  # 与根目录 esphome-modular-lvgl-buttons 符号链接一致（主题字体路径依赖此目录名）
+  lvgl_lib: "esphome-modular-lvgl-buttons"
   board_hw: "waveshare-esp32-s3-touch-lcd-4-v4"   # V3 改为 waveshare-esp32-s3-touch-lcd-4
   mcp_valves_address: "0x20"   # V3 改为 0x21
   valve_home_mode: "stall"
@@ -33,10 +31,10 @@ substitutions:
 esphome:
   name: air-exchange
   friendly_name: "热交换新风机"
-  min_version: 2026.4.0
+  min_version: 2025.12.0
   project:
     name: "air-exchange.display"
-    version: "0.1.0"
+    version: "0.2.0"
   on_boot:
     - priority: 400
       then:
@@ -59,169 +57,37 @@ ota:
   - platform: esphome
     password: !secret ota_password
 
-# V4 硬件需 CH32 扩展组件（hardware 包内已声明，此处再声明一次以便编译）
 external_components:
   - source: github://pr#10071
     components: [waveshare_io_ch32v003]
     refresh: 1h
 
-script:
-  - id: time_update
-    then:
-      - lambda: "return;"
-
 packages:
   device_pins: !include packages/pinmap.yaml
-  theme: !include ${lvgl_lib}/common/theme/index.yaml
-  time: !include ${lvgl_lib}/common/time_sntp.yaml
-  sensors_base: !include ${lvgl_lib}/common/sensors_base.yaml
-  backlight: !include ${lvgl_lib}/common/backlight_time.yaml
-  ota_screen: !include ${lvgl_lib}/common/ota.yaml
-  loading_screen: !include ${lvgl_lib}/pages/loading.yaml
-  info_screen: !include ${lvgl_lib}/pages/info.yaml
-  hardware: !include ${lvgl_lib}/hardware/${board_hw}.yaml
+  theme: !include esphome-modular-lvgl-buttons/common/theme/index.yaml
+  time: !include esphome-modular-lvgl-buttons/common/time_sntp.yaml
+  sensors_base: !include esphome-modular-lvgl-buttons/common/sensors_base.yaml
+  backlight: !include esphome-modular-lvgl-buttons/common/backlight_time.yaml
+  ota_screen: !include esphome-modular-lvgl-buttons/common/ota.yaml
+  loading_screen: !include esphome-modular-lvgl-buttons/pages/loading.yaml
+  info_screen: !include esphome-modular-lvgl-buttons/pages/info.yaml
+  hardware: !include esphome-modular-lvgl-buttons/hardware/waveshare-esp32-s3-touch-lcd-4-v4.yaml
+
+  display_ui: !include packages/display_ui.yaml
+  main_page_assets: !include packages/main_page_assets.yaml
+  main_page_logic: !include packages/main_page_logic.yaml
+  main_page_ui: !include packages/main_page_ui.yaml
 
   sensors_pkg: !include packages/sensors.yaml
   fan_pkg: !include packages/fan.yaml
   actuators_pkg: !include packages/actuators.yaml
   interlock_pkg: !include packages/erv_interlock.yaml
-  display_ui: !include packages/display_ui.yaml
+  city_pm25_pkg: !include packages/city_pm25.yaml
+  tvoc_pkg: !include packages/tvoc_sensor.yaml
 
-  # ── 主页磁贴（改 row/column/text 即可，勿改 uid 除非懂 LVGL 扩展）──
-  ui_co2: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_co2
-      entity_id: co2_indoor
-      row: 0
-      column: 0
-      text: "CO2"
-      icon: $mdi_molecule_co2
-      unit: "ppm"
-      precision: "0"
-
-  ui_pm25: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_pm25
-      entity_id: pm25
-      row: 0
-      column: 1
-      text: "PM2.5"
-      icon: $mdi_blur
-      unit: ""
-      precision: "0"
-
-  ui_temp_in: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_temp_in
-      entity_id: temp_indoor
-      row: 0
-      column: 2
-      text: "In T"
-      icon: $mdi_thermometer
-      unit: "C"
-      precision: "1"
-
-  ui_temp_out: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_temp_out
-      entity_id: temp_outdoor
-      row: 0
-      column: 3
-      text: "Out T"
-      icon: $mdi_thermometer
-      unit: "C"
-      precision: "1"
-
-  ui_hum_in: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_hum_in
-      entity_id: humidity_indoor
-      row: 1
-      column: 0
-      text: "In RH"
-      icon: $mdi_water_percent
-      unit: "%"
-      precision: "0"
-
-  ui_hum_out: !include
-    file: ${lvgl_lib}/ui/sensor/local.yaml
-    vars:
-      uid: ui_hum_out
-      entity_id: humidity_outdoor
-      row: 1
-      column: 1
-      text: "Out RH"
-      icon: $mdi_water_percent
-      unit: "%"
-      precision: "0"
-
-  ui_start: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
-    vars:
-      uid: ui_start
-      entity_id: btn_erv_start
-      row: 1
-      column: 2
-      text: "Start"
-      icon: $mdi_play
-
-  ui_stop: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
-    vars:
-      uid: ui_stop
-      entity_id: btn_erv_stop
-      row: 1
-      column: 3
-      text: "Stop"
-      icon: $mdi_stop
-
-  ui_swing: !include
-    file: ${lvgl_lib}/ui/switch/local.yaml
-    vars:
-      uid: ui_swing
-      entity_id: switch_intake_swing
-      row: 2
-      column: 0
-      text: "Swing"
-      icon: $mdi_arrow_up_down
-
-  ui_rehome: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
-    vars:
-      uid: ui_rehome
-      entity_id: btn_valves_rehome
-      row: 2
-      column: 1
-      text: "Rehome"
-      icon: $mdi_axis_z_rotate_clockwise
-
-  ui_manual_zero: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
-    vars:
-      uid: ui_manual_zero
-      entity_id: btn_valves_manual_zero
-      row: 2
-      column: 2
-      text: "Set 0"
-      icon: $mdi_valve_closed
-
-  ui_goto_ctrl: !include
-    file: ${lvgl_lib}/ui/page/page_button.yaml
-    vars:
-      uid: ui_goto_ctrl
-      row: 2
-      column: 3
-      text: "More"
-      icon: $mdi_chevron_right
-      click_page: ctrl_page
-
+  # ── 副页：送风/排风调节（左右滑回 main_page）──
   ui_fan_supply_down: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
+    file: esphome-modular-lvgl-buttons/ui/button/local.yaml
     vars:
       uid: ui_fan_supply_down
       entity_id: btn_fan_supply_down
@@ -232,7 +98,7 @@ packages:
       icon: $mdi_fan_minus
 
   ui_fan_supply_up: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
+    file: esphome-modular-lvgl-buttons/ui/button/local.yaml
     vars:
       uid: ui_fan_supply_up
       entity_id: btn_fan_supply_up
@@ -243,7 +109,7 @@ packages:
       icon: $mdi_fan_plus
 
   ui_fan_exhaust_down: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
+    file: esphome-modular-lvgl-buttons/ui/button/local.yaml
     vars:
       uid: ui_fan_exhaust_down
       entity_id: btn_fan_exhaust_down
@@ -254,7 +120,7 @@ packages:
       icon: $mdi_fan_minus
 
   ui_fan_exhaust_up: !include
-    file: ${lvgl_lib}/ui/button/local.yaml
+    file: esphome-modular-lvgl-buttons/ui/button/local.yaml
     vars:
       uid: ui_fan_exhaust_up
       entity_id: btn_fan_exhaust_up
@@ -265,7 +131,7 @@ packages:
       icon: $mdi_fan_plus
 
   ui_goto_main: !include
-    file: ${lvgl_lib}/ui/page/page_button.yaml
+    file: esphome-modular-lvgl-buttons/ui/page/page_button.yaml
     vars:
       uid: ui_goto_main
       row: 0
@@ -276,7 +142,7 @@ packages:
       click_page: main_page
 
   ui_info: !include
-    file: ${lvgl_lib}/ui/page/page_button.yaml
+    file: esphome-modular-lvgl-buttons/ui/page/page_button.yaml
     vars:
       uid: ui_info
       row: 1
@@ -295,18 +161,16 @@ font:
     size: 40
     bpp: 8
     glyphs:
-      - $mdi_play
-      - $mdi_stop
+      - $mdi_wifi
+      - $mdi_wifi_off
+      - $mdi_wifi_strength_1
+      - $mdi_wifi_strength_2
+      - $mdi_wifi_strength_3
+      - $mdi_wifi_strength_4
+      - $mdi_thermometer
+      - $mdi_water_percent
       - $mdi_fan
       - $mdi_fan_plus
       - $mdi_fan_minus
-      - $mdi_arrow_up_down
-      - $mdi_thermometer
-      - $mdi_water_percent
-      - $mdi_molecule_co2
-      - $mdi_blur
-      - $mdi_axis_z_rotate_clockwise
-      - $mdi_valve_closed
       - $mdi_chevron_left
-      - $mdi_chevron_right
       - $mdi_information_box

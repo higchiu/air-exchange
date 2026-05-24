@@ -15,9 +15,13 @@ sensor:
     temperature:
       name: "sht_indoor_temp"
       id: temp_indoor
+      on_value:
+        - script.execute: main_page_refresh
     humidity:
       name: "sht_indoor_humidity"
       id: humidity_indoor
+      on_value:
+        - script.execute: main_page_refresh
 
   - platform: sht3xd
     i2c_id: bus_a
@@ -26,9 +30,13 @@ sensor:
     temperature:
       name: "sht_outdoor_temp"
       id: temp_outdoor
+      on_value:
+        - script.execute: main_page_refresh
     humidity:
       name: "sht_outdoor_humidity"
       id: humidity_outdoor
+      on_value:
+        - script.execute: main_page_refresh
 
   - platform: scd30
     i2c_id: bus_a
@@ -37,6 +45,8 @@ sensor:
     co2:
       name: "scd30_co2"
       id: co2_indoor
+      on_value:
+        - script.execute: main_page_refresh
     temperature:
       name: "scd30_temp"
       internal: true
@@ -51,3 +61,5 @@ sensor:
     pm_2_5:
       name: "pms5003_pm25"
       id: pm25
+      on_value:
+        - script.execute: main_page_refresh

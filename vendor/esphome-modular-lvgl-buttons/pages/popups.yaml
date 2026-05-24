@@ -1,0 +1,51 @@
+---
+# Popup system — shared infrastructure
+#
+# Architecture
+# ------------
+# All popups live in LVGL's `top_layer` (a singleton container that floats
+# above every page). Each popup is a sibling `obj` widget inside `top_layer`,
+# hidden by default, shown on demand.
+#
+# A single dim scrim (`popup_scrim`) also lives in top_layer:
+#   - Provides the dim backdrop behind the active popup
+#   - Catches any tap outside the popup (the popup is 95% size, scrim is 100%)
+#     and closes everything
+#
+# Each popup file extends the `popup_close` script to register its own hide:
+#
+#   script:
+#     - id: !extend popup_close
+#       then:
+#         - lvgl.widget.hide: popup_<name>
+#
+# To open a popup from anywhere:
+#
+#   - lvgl.widget.show: popup_scrim
+#   - lvgl.widget.show: popup_<name>
+#
+# Z-order note: widgets render in include order. Because this file is
+# included BEFORE any popup file, the scrim renders below all popups.
+
+script:
+  # Extended by each popup file to hide its own widget.
+  - id: popup_close
+    then:
+      - lvgl.widget.hide: popup_scrim
+
+lvgl:
+  top_layer:
+    widgets:
+      - obj:
+          id: popup_scrim
+          hidden: true
+          width: 100%
+          height: 100%
+          bg_color: black
+          bg_opa: 60%
+          border_width: 0
+          radius: 0
+          pad_all: 0
+          clickable: true
+          on_click:
+            - script.execute: popup_close

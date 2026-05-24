@@ -1,0 +1,112 @@
+# main_page 数据刷新：时间、Wi-Fi、温湿度、PM2.5/CO2/TVOC 绿黄红
+
+script:
+  # SNTP 每分钟触发（time_sntp.yaml）
+  - id: time_update
+    then:
+      - script.execute: main_page_refresh
+
+  - id: main_page_refresh
+    mode: restart
+    then:
+      - lambda: |-
+          // ── 时间 MM月dd日 HH:mm ──
+          auto t = id(system_time).now();
+          if (t.is_valid()) {
+            char tbuf[32];
+            snprintf(tbuf, sizeof(tbuf), "%d月%02d日 %02d:%02d",
+                     t.month, t.day_of_month, t.hour, t.minute);
+            lv_label_set_text(id(lbl_clock), tbuf);
+          }
+
+          // ── Wi-Fi 图标（按 dBm）──
+          const char *wifi_glyph = "${mdi_wifi_off}";
+          if (id(wifi_signal_db).has_state()) {
+            float db = id(wifi_signal_db).state;
+            if (db >= -55) wifi_glyph = "${mdi_wifi_strength_4}";
+            else if (db >= -65) wifi_glyph = "${mdi_wifi_strength_3}";
+            else if (db >= -75) wifi_glyph = "${mdi_wifi_strength_2}";
+            else if (db >= -85) wifi_glyph = "${mdi_wifi_strength_1}";
+            else wifi_glyph = "${mdi_wifi_strength_1}";
+          }
+          lv_label_set_text(id(lbl_wifi_icon), wifi_glyph);
+
+          auto pm25_color = [](float v) -> lv_color_t {
+            if (v < 35.0f) return lv_color_hex(0x7ACF38);
+            if (v < 75.0f) return lv_color_hex(0xF4A900);
+            return lv_color_hex(0xF5075C);
+          };
+          auto co2_color = [](float v) -> lv_color_t {
+            if (v < 800.0f) return lv_color_hex(0x7ACF38);
+            if (v < 1200.0f) return lv_color_hex(0xF4A900);
+            return lv_color_hex(0xF5075C);
+          };
+          auto tvoc_color = [](float v) -> lv_color_t {
+            if (v <= 2.0f) return lv_color_hex(0x7ACF38);
+            if (v <= 4.0f) return lv_color_hex(0xF4A900);
+            return lv_color_hex(0xF5075C);
+          };
+
+          // ── 室内温湿度 ──
+          if (id(temp_indoor).has_state()) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°C", id(temp_indoor).state);
+            lv_label_set_text(id(lbl_in_temp), buf);
+          }
+          if (id(humidity_indoor).has_state()) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(humidity_indoor).state);
+            lv_label_set_text(id(lbl_in_hum), buf);
+          }
+
+          // ── 室外温湿度 ──
+          if (id(temp_outdoor).has_state()) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°C", id(temp_outdoor).state);
+            lv_label_set_text(id(lbl_out_temp), buf);
+          }
+          if (id(humidity_outdoor).has_state()) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(humidity_outdoor).state);
+            lv_label_set_text(id(lbl_out_hum), buf);
+          }
+
+          // ── 室内 PM2.5 ──
+          if (id(pm25).has_state()) {
+            float v = id(pm25).state;
+            lv_obj_set_style_bg_color(id(badge_in_pm25), pm25_color(v), LV_PART_MAIN);
+            lv_label_set_text(id(lbl_in_pm25_val), str_sprintf("%.0f", v).c_str());
+          }
+
+          // ── 室内 CO2 ──
+          if (id(co2_indoor).has_state()) {
+            float v = id(co2_indoor).state;
+            lv_obj_set_style_bg_color(id(badge_in_co2), co2_color(v), LV_PART_MAIN);
+            lv_label_set_text(id(lbl_in_co2_val), str_sprintf("%.0f", v).c_str());
+          }
+
+          // ── 室内 TVOC 等级 ──
+          if (id(tvoc_level).has_state()) {
+            float v = id(tvoc_level).state;
+            lv_obj_set_style_bg_color(id(badge_in_tvoc), tvoc_color(v), LV_PART_MAIN);
+            lv_label_set_text(id(lbl_in_tvoc_val), str_sprintf("%.0f", v).c_str());
+          }
+
+          // ── 室外 PM2.5（同城联网）──
+          if (id(pm25_city).has_state()) {
+            float v = id(pm25_city).state;
+            lv_obj_set_style_bg_color(id(badge_out_pm25), pm25_color(v), LV_PART_MAIN);
+            lv_label_set_text(id(lbl_out_pm25_val), str_sprintf("%.0f", v).c_str());
+          }
+
+interval:
+  - interval: 30s
+    then:
+      - script.execute: main_page_refresh
+
+esphome:
+  on_boot:
+    - priority: 500
+      then:
+        - delay: 2s
+        - script.execute: main_page_refresh
