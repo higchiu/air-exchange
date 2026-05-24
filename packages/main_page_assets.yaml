@@ -1,7 +1,7 @@
 # main_page 资源：背景图、中文字体、配色
 
 image:
-  - file: assets/bg.png
+  - file: assets/bg-640.png
     id: main_bg_img
     resize: 480x480
     type: RGB565

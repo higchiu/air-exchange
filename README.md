@@ -83,7 +83,7 @@ air-exchange/
 
 | 资源 | 说明 |
 |------|------|
-| [`assets/bg.png`](assets/bg.png) | 全屏背景（烧录用，缩放到 480×480） |
+| [`assets/bg-640.png`](assets/bg-640.png) | 全屏背景（640×640 源图，烧录时缩放到 480×480） |
 | [`assets/element.jpg`](assets/element.jpg) | 控件位置对照图（**仅文档**，不进固件） |
 | [`assets/UI_LAYOUT.md`](assets/UI_LAYOUT.md) | 坐标、配色阈值、待做底部按钮 |
 

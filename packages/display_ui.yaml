@@ -1,4 +1,4 @@
-# LVGL 页面：main_page 使用 bg.png 自定义布局（见 packages/main_page_*.yaml）
+# LVGL 页面：main_page 使用 bg-640.png 自定义布局（见 packages/main_page_*.yaml）
 # 副页 ctrl_page 仍为网格按钮
 
 substitutions:

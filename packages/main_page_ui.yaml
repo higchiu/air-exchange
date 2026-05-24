@@ -1,4 +1,4 @@
-# main_page：bg.png 背景 + element.jpg 标注的控件位置（480×480）
+# main_page：bg-640.png 背景 + element.jpg 标注的控件位置（480×480）
 # 布局参考图：assets/element.jpg
 
 lvgl:

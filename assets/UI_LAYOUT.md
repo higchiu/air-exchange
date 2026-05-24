@@ -2,7 +2,7 @@
 
 | 文件 | 用途 |
 |------|------|
-| [`bg.png`](bg.png) | 固件 `main_page` 全屏背景（480×480，由 640 源图缩放） |
+| [`bg-640.png`](bg-640.png) | 固件 `main_page` 全屏背景（640×640 源图，烧录缩放到 480×480） |
 | [`element.jpg`](element.jpg) | **仅作开发对照**：各控件在日立参考 UI 上的位置，不烧录进设备 |
 
 固件实现见 `packages/main_page_ui.yaml`、`packages/main_page_logic.yaml`。
