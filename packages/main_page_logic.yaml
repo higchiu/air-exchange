@@ -31,20 +31,28 @@ script:
           }
           lv_label_set_text(id(lbl_wifi_icon), wifi_glyph);
 
-          auto pm25_color = [](float v) -> lv_color_t {
-            if (v < 35.0f) return lv_color_hex(0x7ACF38);
-            if (v < 75.0f) return lv_color_hex(0xF4A900);
-            return lv_color_hex(0xF5075C);
+          struct AqiStyle {
+            lv_color_t bg;
+            lv_color_t fg;
           };
-          auto co2_color = [](float v) -> lv_color_t {
-            if (v < 800.0f) return lv_color_hex(0x7ACF38);
-            if (v < 1200.0f) return lv_color_hex(0xF4A900);
-            return lv_color_hex(0xF5075C);
+          auto pm25_style = [](float v) -> AqiStyle {
+            if (v < 35.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
+            if (v < 75.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
           };
-          auto tvoc_color = [](float v) -> lv_color_t {
-            if (v <= 2.0f) return lv_color_hex(0x7ACF38);
-            if (v <= 4.0f) return lv_color_hex(0xF4A900);
-            return lv_color_hex(0xF5075C);
+          auto co2_style = [](float v) -> AqiStyle {
+            if (v < 800.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
+            if (v < 1200.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
+          };
+          auto tvoc_style = [](float v) -> AqiStyle {
+            if (v <= 2.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
+            if (v <= 4.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
+          };
+          auto apply_aqi_badge = [](lv_obj_t *badge, lv_obj_t *val, const AqiStyle &st) {
+            lv_obj_set_style_bg_color(badge, st.bg, LV_PART_MAIN);
+            lv_obj_set_style_text_color(val, st.fg, LV_PART_MAIN);
           };
 
           // ── 室内温湿度 ──
@@ -74,29 +82,37 @@ script:
           // ── 室内 PM2.5 ──
           if (id(pm25).has_state()) {
             float v = id(pm25).state;
-            lv_obj_set_style_bg_color(id(badge_in_pm25), pm25_color(v), LV_PART_MAIN);
+            auto st = pm25_style(v);
+            apply_aqi_badge(id(badge_in_pm25), id(lbl_in_pm25_val), st);
             lv_label_set_text(id(lbl_in_pm25_val), str_sprintf("%.0f", v).c_str());
+            lv_obj_set_style_text_color(id(lbl_in_pm25_val), st.fg, LV_PART_MAIN);
           }
 
           // ── 室内 CO2 ──
           if (id(co2_indoor).has_state()) {
             float v = id(co2_indoor).state;
-            lv_obj_set_style_bg_color(id(badge_in_co2), co2_color(v), LV_PART_MAIN);
+            auto st = co2_style(v);
+            apply_aqi_badge(id(badge_in_co2), id(lbl_in_co2_val), st);
             lv_label_set_text(id(lbl_in_co2_val), str_sprintf("%.0f", v).c_str());
+            lv_obj_set_style_text_color(id(lbl_in_co2_val), st.fg, LV_PART_MAIN);
           }
 
           // ── 室内 TVOC 等级 ──
           if (id(tvoc_level).has_state()) {
             float v = id(tvoc_level).state;
-            lv_obj_set_style_bg_color(id(badge_in_tvoc), tvoc_color(v), LV_PART_MAIN);
+            auto st = tvoc_style(v);
+            apply_aqi_badge(id(badge_in_tvoc), id(lbl_in_tvoc_val), st);
             lv_label_set_text(id(lbl_in_tvoc_val), str_sprintf("%.0f", v).c_str());
+            lv_obj_set_style_text_color(id(lbl_in_tvoc_val), st.fg, LV_PART_MAIN);
           }
 
           // ── 室外 PM2.5（同城联网）──
           if (id(pm25_city).has_state()) {
             float v = id(pm25_city).state;
-            lv_obj_set_style_bg_color(id(badge_out_pm25), pm25_color(v), LV_PART_MAIN);
+            auto st = pm25_style(v);
+            apply_aqi_badge(id(badge_out_pm25), id(lbl_out_pm25_val), st);
             lv_label_set_text(id(lbl_out_pm25_val), str_sprintf("%.0f", v).c_str());
+            lv_obj_set_style_text_color(id(lbl_out_pm25_val), st.fg, LV_PART_MAIN);
           }
 
 interval:

@@ -1,12 +1,12 @@
-# main_page：bg-640.png 背景 + element.jpg 标注的控件位置（480×480）
-# 布局参考图：assets/element.jpg
+# main_page 控件坐标（480×480 屏）
+# 源稿：packages/main_page_coords_640.yaml（640×640，与 bg-640.png 1:1）
+# 换算：display = round(design × 0.75)
 
 lvgl:
   pages:
     - id: !extend main_page
       layout: NONE
       widgets:
-        # ── 背景（铺满）──
         - image:
             id: main_bg_widget
             src: main_bg_img
@@ -15,200 +15,220 @@ lvgl:
             width: 480
             height: 480
 
-        # ── 顶部：Wi-Fi（左） / 时间（右）──
+        # 顶栏 — 640:(24,16) (331,20)
         - label:
             id: lbl_wifi_icon
-            x: 22
-            y: 16
+            x: 18
+            y: 12
             text_font: $icon_font
             text_color: panel_text
             text: $mdi_wifi
         - label:
             id: lbl_clock
             x: 248
-            y: 14
+            y: 15
             width: 220
             text_align: right
             text_font: font_cn_18
             text_color: panel_text
             text: "--月--日 --:--"
 
-        # ── 室内：标签 + 温湿度（element 左上）──
+        # 室内 — 640 坐标 ×0.75
         - label:
             id: lbl_indoor_tag
-            x: 92
-            y: 74
+            x: 32
+            y: 119
             text_font: font_cn_18
-            text_color: panel_text
+            text_color: panel_text_dim
             text: "室内"
         - label:
             id: lbl_in_temp_icon
-            x: 108
-            y: 104
+            x: 32
+            y: 143
             text_font: $icon_font
             text_color: panel_text
             text: $mdi_thermometer
         - label:
             id: lbl_in_temp
-            x: 148
-            y: 102
+            x: 62
+            y: 143
             text_font: nunito_24
             text_color: panel_text
             text: "--°C"
         - label:
             id: lbl_in_hum_icon
-            x: 218
-            y: 104
+            x: 134
+            y: 143
             text_font: $icon_font
             text_color: panel_text
             text: $mdi_water_percent
         - label:
             id: lbl_in_hum
-            x: 252
-            y: 102
+            x: 159
+            y: 143
             text_font: nunito_24
             text_color: panel_text
             text: "--%"
 
-        # ── 室内：PM2.5 / CO2 / TVOC 圆角徽章（绿黄红由脚本刷新）──
+        # 室内 PM2.5 / CO₂ / TVOC — 一行两个（640：行1 PM+CO₂，行2 TVOC）
         - obj:
             id: badge_in_pm25
-            x: 52
-            y: 148
-            width: 112
-            height: 112
-            radius: 56
-            bg_color: aqi_green
+            x: 32
+            y: 207
+            width: 66
+            height: 66
+            radius: 33
+            bg_color: aqi_bg_yellow
             border_width: 0
             widgets:
               - label:
                   id: lbl_in_pm25_val
                   align: center
-                  y: -10
-                  text_font: nunito_42
-                  text_color: white
+                  text_font: nunito_30
+                  text_color: aqi_fg_yellow
                   text: "--"
-              - label:
-                  id: lbl_in_pm25_cap
-                  align: center
-                  y: 28
-                  text_font: nunito_20
-                  text_color: white
-                  text: "PM2.5"
+        - label:
+            id: lbl_in_pm25_name
+            x: 108
+            y: 222
+            text_font: nunito_18
+            text_color: panel_text
+            text: "PM2.5"
+        - label:
+            id: lbl_in_pm25_unit
+            x: 108
+            y: 242
+            text_font: nunito_14
+            text_color: panel_text_dim
+            text: "μg/m³"
 
         - obj:
             id: badge_in_co2
-            x: 208
-            y: 148
-            width: 112
-            height: 112
-            radius: 56
-            bg_color: aqi_yellow
+            x: 182
+            y: 207
+            width: 66
+            height: 66
+            radius: 33
+            bg_color: aqi_bg_yellow
             border_width: 0
             widgets:
               - label:
                   id: lbl_in_co2_val
                   align: center
-                  y: -10
-                  text_font: nunito_42
-                  text_color: white
+                  text_font: nunito_30
+                  text_color: aqi_fg_yellow
                   text: "--"
-              - label:
-                  id: lbl_in_co2_cap
-                  align: center
-                  y: 28
-                  text_font: nunito_20
-                  text_color: white
-                  text: "CO2"
+        - label:
+            id: lbl_in_co2_name
+            x: 258
+            y: 222
+            text_font: font_cn_16
+            text_color: panel_text
+            text: "CO₂"
+        - label:
+            id: lbl_in_co2_unit
+            x: 258
+            y: 242
+            text_font: nunito_18
+            text_color: panel_text_dim
+            text: "ppm"
 
         - obj:
             id: badge_in_tvoc
-            x: 52
-            y: 272
-            width: 112
-            height: 112
-            radius: 56
-            bg_color: aqi_green
+            x: 32
+            y: 288
+            width: 66
+            height: 66
+            radius: 33
+            bg_color: aqi_bg_yellow
             border_width: 0
             widgets:
               - label:
                   id: lbl_in_tvoc_val
                   align: center
-                  y: -10
-                  text_font: nunito_42
-                  text_color: white
+                  text_font: nunito_30
+                  text_color: aqi_fg_yellow
                   text: "--"
-              - label:
-                  id: lbl_in_tvoc_cap
-                  align: center
-                  y: 28
-                  text_font: font_cn_14
-                  text_color: white
-                  text: "TVOC等级"
+        - label:
+            id: lbl_in_tvoc_name
+            x: 108
+            y: 303
+            text_font: nunito_18
+            text_color: panel_text
+            text: "TVOC"
+        - label:
+            id: lbl_in_tvoc_unit
+            x: 108
+            y: 323
+            text_font: font_cn_12
+            text_color: panel_text_dim
+            text: "级"
 
-        # ── 室外：右侧胶囊区（element 右栏）──
+        # 室外 — 640 右侧胶囊内
         - label:
             id: lbl_outdoor_tag
-            x: 358
+            x: 396
             y: 88
-            text_font: font_cn_18
-            text_color: panel_text
+            width: 58
+            text_align: center
+            text_font: font_cn_14
+            text_color: panel_text_dim
             text: "室外"
         - label:
             id: lbl_out_temp_icon
-            x: 352
-            y: 122
+            x: 398
+            y: 118
             text_font: $icon_font
             text_color: panel_text
             text: $mdi_thermometer
         - label:
             id: lbl_out_temp
-            x: 388
-            y: 120
-            text_font: nunito_24
+            x: 430
+            y: 116
+            text_font: nunito_12
             text_color: panel_text
             text: "--°C"
         - label:
             id: lbl_out_hum_icon
-            x: 352
-            y: 158
+            x: 398
+            y: 146
             text_font: $icon_font
             text_color: panel_text
             text: $mdi_water_percent
         - label:
             id: lbl_out_hum
-            x: 388
-            y: 156
-            text_font: nunito_24
+            x: 430
+            y: 145
+            text_font: nunito_12
             text_color: panel_text
             text: "--%"
 
+        - label:
+            id: lbl_out_pm25_cap
+            x: 398
+            y: 194
+            width: 55
+            text_align: center
+            text_font: nunito_16
+            text_color: panel_text
+            text: "PM2.5"
         - obj:
             id: badge_out_pm25
-            x: 362
-            y: 218
-            width: 88
-            height: 88
-            radius: 44
-            bg_color: aqi_yellow
+            x: 398
+            y: 209
+            width: 55
+            height: 55
+            radius: 27
+            bg_color: aqi_bg_yellow
             border_width: 0
             widgets:
               - label:
                   id: lbl_out_pm25_val
                   align: center
-                  y: -8
-                  text_font: nunito_36
-                  text_color: white
+                  text_font: nunito_12
+                  text_color: aqi_fg_yellow
                   text: "--"
-              - label:
-                  id: lbl_out_pm25_cap
-                  align: center
-                  y: 22
-                  text_font: nunito_20
-                  text_color: white
-                  text: "PM2.5"
 
-        # 透明热区：进入副页（送/排风调节）；左右滑也可切页
         - button:
             id: btn_main_more
             x: 400

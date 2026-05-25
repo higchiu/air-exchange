@@ -1,4 +1,6 @@
 # main_page 资源：背景图、中文字体、配色
+# bg-640.png 为 640×640 设计稿；屏上 480×480 显示时等比缩小。
+# 控件坐标见 main_page_coords_640.yaml，×0.75 写入 main_page_ui.yaml。
 
 image:
   - file: assets/bg-640.png
@@ -13,12 +15,44 @@ color:
     hex: "F4A900"
   - id: aqi_red
     hex: "F5075C"
+  # 参考 Hitachi PC-P1HPQ3：浅底圆章 + 彩色数字
+  - id: aqi_bg_green
+    hex: "E5F4E8"
+  - id: aqi_bg_yellow
+    hex: "FFF4E0"
+  - id: aqi_bg_red
+    hex: "FCE8E8"
+  - id: aqi_fg_green
+    hex: "45B673"
+  - id: aqi_fg_yellow
+    hex: "F2AC47"
+  - id: aqi_fg_red
+    hex: "F25B2B"
   - id: panel_text
     hex: "4A6B8A"
   - id: panel_text_dim
     hex: "6A8AA8"
+  - id: panel_tag
+    hex: "8A8A8A"
 
 font:
+  # 室内圆章数值
+  - file: "esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf"
+    id: nunito_30
+    size: 30
+    bpp: 8
+    glyphs: "0123456789.-"
+  # 室外「室外」标签
+  - file: "gfonts://Noto%20Sans%20SC"
+    id: font_cn_12
+    size: 12
+    bpp: 4
+    glyphs: "月日时分室内室外等级温湿度"
+  - file: "gfonts://Noto%20Sans%20SC"
+    id: font_cn_16
+    size: 16
+    bpp: 4
+    glyphs: "月日时分室内室外等级温湿度"
   # 顶部时间、室内/室外标签（element.jpg 标注位置）
   - file: "gfonts://Noto%20Sans%20SC"
     id: font_cn_18

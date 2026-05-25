@@ -1,0 +1,79 @@
+# main_page 布局坐标 — 与 bg-640.png 1:1（640×640 设计稿）
+# 烧录/预览时统一乘以 display_scale（480÷640 = 0.75）得到 480×480 屏坐标
+#
+# 用法：改此文件中的数值 → 按公式更新 main_page_ui.yaml 与 panel-bg-480.html
+#   x_480 = round(x_640 * 0.75)
+
+substitutions:
+  ui_design_size: "640"
+  ui_display_size: "480"
+  ui_display_scale: "0.75"
+
+  # ── 顶栏 ──
+  wifi_x: "24"
+  wifi_y: "16"
+  clock_x: "331"
+  clock_y: "20"
+  clock_w: "293"
+
+  # ── 室内（房屋区域内左对齐）──
+  in_tag_x: "42"
+  in_tag_y: "158"
+  in_temp_ix: "43"
+  in_temp_iy: "191"
+  in_temp_x: "83"
+  in_temp_y: "191"
+  in_hum_ix: "178"
+  in_hum_iy: "191"
+  in_hum_x: "212"
+  in_hum_y: "191"
+  # 室内指标：左圆 + 右名称/单位；一行两个；块与块间隔 20px
+  badge_in_circle: "88"
+  badge_in_gap: "20"
+  badge_in_label_gap: "14"
+  badge_in_label_w: "72"
+  badge_in_cell_w: "174"
+  badge_in_col1_x: "42"
+  badge_in_col2_x: "242"
+  badge_in_row1_y: "276"
+  badge_in_row2_y: "384"
+  badge_in_label_dx: "102"
+  badge_in_name_dy: "20"
+  badge_in_unit_dy: "46"
+
+  # ── 室外（右侧胶囊）──
+  out_row_w: "77"
+  out_tag_x: "528"
+  out_tag_y: "117"
+  out_temp_ix: "530"
+  out_temp_iy: "157"
+  out_temp_x: "573"
+  out_temp_y: "155"
+  out_hum_ix: "530"
+  out_hum_iy: "195"
+  out_hum_x: "573"
+  out_hum_y: "193"
+  badge_out_w: "73"
+  badge_out_h: "73"
+  badge_out_r: "36"
+  badge_out_pm_x: "531"
+  badge_out_pm_y: "279"
+  badge_out_cap_x: "531"
+  badge_out_cap_y: "259"
+  badge_out_cap_gap: "4"
+  badge_out_val_y: "-6"
+
+  more_x: "533"
+  more_y: "573"
+  more_w: "96"
+  more_h: "59"
+
+  # debug 区域框（640）
+  zone_house_x: "11"
+  zone_house_y: "117"
+  zone_house_w: "389"
+  zone_house_h: "389"
+  zone_out_x: "519"
+  zone_out_y: "102"
+  zone_out_w: "99"
+  zone_out_h: "310"

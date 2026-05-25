@@ -2,75 +2,199 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8" />
-<title>Air Exchange Panel Background 480x480</title>
+<title>Air Exchange main_page 预览 480×480</title>
 <style>
-  html, body { margin: 0; padding: 0; }
-  body {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
     width: 480px;
     height: 480px;
     overflow: hidden;
-    background:
-      radial-gradient(120% 80% at 50% 110%, #f1f6ff 0%, #dbe8fb 35%, #c6dafa 70%, #b8d0f7 100%);
+    background: #1a2a3a;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   }
-  .stage {
+  /* 外层 480 视口；内层 640 设计稿再整体 scale(0.75)，与固件 bg resize 一致 */
+  .viewport {
+    width: 480px;
+    height: 480px;
+    overflow: hidden;
+  }
+  .canvas-640 {
     position: relative;
-    width: 480px;
-    height: 480px;
-    overflow: hidden;
+    width: 640px;
+    height: 640px;
+    transform: scale(0.75);
+    transform-origin: 0 0;
+    background: url("bg-640.png") 0 0 / 640px 640px no-repeat;
   }
-  svg.house {
-    position: absolute;
-    /*
-      Smaller house, bleeds slightly off LEFT.
-      Visible house area: x ≈ 0..340, y ≈ 70..390
-      Clear zone on right (for 室外 panel): x ≈ 340..480 (~140 px wide)
-    */
-    left: -60px;
-    top: 70px;
+
+  .wifi { position: absolute; left: 24px; top: 16px; font-size: 37px; color: #4a6b8a; }
+  .clock {
+    position: absolute; left: 331px; top: 20px; width: 293px;
+    text-align: right; font-size: 24px; font-weight: 500; color: #4a6b8a;
   }
+
+  .tag { position: absolute; font-size: 24px; font-weight: 500; color: #4a6b8a; }
+  .tag-indoor,
+  .tag-outdoor { color: #6a8aa8; }
+  .tag-indoor { left: 42px; top: 158px; }
+  .tag-outdoor { left: 528px; top: 117px; width: 77px; font-size: 20px; text-align: center; box-sizing: border-box; }
+
+  .metric-row {
+    position: absolute; display: flex; align-items: center; gap: 8px;
+    color: #4a6b8a; font-size: 32px; font-weight: 600;
+  }
+  .metric-row .ico { font-size: 29px; }
+  .in-temp { left: 43px; top: 191px; }
+  .in-hum  { left: 178px; top: 191px; }
+  .out-temp { left: 530px; top: 157px; width: 77px; font-size: 20px; box-sizing: border-box; }
+  .out-hum  { left: 530px; top: 195px; width: 77px; font-size: 20px; box-sizing: border-box; }
+  .out-temp .ico,
+  .out-hum .ico { font-size: 17px; }
+
+  /* 室内：左圆 + 右侧名称/单位；一行两个 */
+  .in-metric {
+    position: absolute; display: flex; align-items: center; gap: 14px;
+  }
+  .in-metric .disc {
+    flex-shrink: 0; width: 88px; height: 88px; border-radius: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .in-metric .disc .val {
+    font-size: 30px; line-height: 1; font-family: "Nunito", system-ui, sans-serif;
+    color: inherit;
+  }
+  .in-metric .meta { display: flex; flex-direction: column; gap: 4px; color: #4a6b8a; }
+  .in-metric .meta .name { font-size: 19px; font-weight: 600; }
+  .in-metric .meta .unit { font-size: 15px; font-weight: 500; color: #6a8aa8; }
+  .in-metric-pm   { left: 42px;  top: 276px; }
+  .in-metric-co2  { left: 242px; top: 276px; }
+  .in-metric-tvoc { left: 42px;  top: 384px; }
+
+  .badge {
+    position: absolute; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-weight: 700;
+  }
+  .badge .val { font-size: 56px; line-height: 1; font-family: "Nunito", system-ui, sans-serif; }
+  .badge .cap { margin-top: 5px; font-size: 19px; font-weight: 600; }
+  .badge.sm .val { font-size: 38px; }
+
+  /* 室外 PM2.5：标题在上，圆章在下，同宽居中 */
+  .out-pm25 { position: absolute; left: 531px; top: 259px; width: 73px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .out-pm25 .cap { width: 100%; text-align: center; font-size: 16px; font-weight: 600; color: #4a6b8a; line-height: 1; }
+  .out-pm25 .disc {
+    margin-top: 2px;
+    width: 73px; height: 73px; border-radius: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .out-pm25 .disc .val {
+    font-size: 26px; line-height: 1; font-family: "Nunito", system-ui, sans-serif;
+    color: inherit;
+  }
+
+  /* 参考 Hitachi PC-P1HPQ3：浅底圆章 + 彩色数字 */
+  .aqi-green  { background: #e5f4e8; color: #45b673; }
+  .aqi-yellow { background: #fff4e0; color: #f2ac47; }
+  .aqi-red    { background: #fce8e8; color: #f25b2b; }
+
+  .more {
+    position: absolute; left: 533px; top: 573px; width: 96px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px; color: #6a8aa8;
+  }
+
+  body.debug .zone-house {
+    position: absolute; left: 11px; top: 117px; width: 389px; height: 389px;
+    border: 1px dashed rgba(0, 120, 255, 0.45); border-radius: 12px; pointer-events: none;
+  }
+  body.debug .zone-outdoor {
+    position: absolute; left: 519px; top: 102px; width: 99px; height: 310px;
+    border: 1px dashed rgba(255, 120, 0, 0.5); border-radius: 53px; pointer-events: none;
+  }
+  body.debug .hit { outline: 1px dashed rgba(255, 0, 0, 0.45); }
 </style>
 </head>
 <body>
-  <div class="stage">
-    <svg class="house" width="400" height="320" viewBox="0 0 400 320"
-         xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="glassFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.70"/>
-          <stop offset="55%"  stop-color="#ffffff" stop-opacity="0.42"/>
-          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.20"/>
-        </linearGradient>
-        <linearGradient id="glassEdge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.95"/>
-          <stop offset="40%"  stop-color="#ffffff" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.10"/>
-        </linearGradient>
-        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
-          <feOffset dx="0" dy="8" result="off"/>
-          <feComponentTransfer><feFuncA type="linear" slope="0.22"/></feComponentTransfer>
-          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
+  <div class="viewport">
+    <div class="canvas-640" id="canvas">
+      <div class="zone-house" aria-hidden="true"></div>
+      <div class="zone-outdoor" aria-hidden="true"></div>
 
-      <!-- Rounded pentagon (r = 16) -->
-      <path
-        d="M 185.15 5.94
-           Q 200 0 214.85 5.94
-           L 385.15 74.06
-           Q 400 80 400 96
-           L 400 304
-           Q 400 320 384 320
-           L 16 320
-           Q 0 320 0 304
-           L 0 96
-           Q 0 80 14.85 74.06
-           Z"
-        fill="url(#glassFill)"
-        stroke="url(#glassEdge)"
-        stroke-width="1.2"
-        filter="url(#softShadow)" />
-    </svg>
+      <div class="wifi">📶</div>
+      <div class="clock" id="clock">--月--日 --:--</div>
+
+      <div class="tag tag-indoor">室内</div>
+      <div class="metric-row in-temp"><span class="ico">🌡</span><span>24°C</span></div>
+      <div class="metric-row in-hum"><span class="ico">💧</span><span>52%</span></div>
+
+      <div class="in-metric in-metric-pm">
+        <div class="disc aqi-green"><span class="val">18</span></div>
+        <div class="meta"><span class="name">PM2.5</span><span class="unit">μg/m³</span></div>
+      </div>
+      <div class="in-metric in-metric-co2">
+        <div class="disc aqi-yellow"><span class="val">620</span></div>
+        <div class="meta"><span class="name">CO₂</span><span class="unit">ppm</span></div>
+      </div>
+      <div class="in-metric in-metric-tvoc">
+        <div class="disc aqi-yellow"><span class="val">3</span></div>
+        <div class="meta"><span class="name">TVOC</span><span class="unit">级</span></div>
+      </div>
+
+      <div class="tag tag-outdoor">室外</div>
+      <div class="metric-row out-temp"><span class="ico">🌡</span><span>22°C</span></div>
+      <div class="metric-row out-hum"><span class="ico">💧</span><span>48%</span></div>
+
+      <div class="out-pm25">
+        <div class="cap">PM2.5</div>
+        <div class="disc aqi-yellow"><span class="val">42</span></div>
+      </div>
+
+      <div class="more">More</div>
+    </div>
   </div>
+
+<script>
+  const SCALE = 480 / 640;
+  const AQI = {
+    pm25: v => v < 35 ? "aqi-green" : v < 75 ? "aqi-yellow" : "aqi-red",
+    co2: v => v < 800 ? "aqi-green" : v < 1200 ? "aqi-yellow" : "aqi-red",
+    tvoc: v => v <= 2 ? "aqi-green" : v <= 4 ? "aqi-yellow" : "aqi-red",
+  };
+  function setInMetric(sel, v, fn) {
+    const el = document.querySelector(sel);
+    el.querySelector(".val").textContent = Math.round(v);
+    el.querySelector(".disc").className = "disc " + AQI[fn](v);
+  }
+  function setBadge(sel, v, fn, extra) {
+    const el = document.querySelector(sel);
+    el.querySelector(".val").textContent = Math.round(v);
+    el.className = "badge " + sel.slice(1) + (extra ? " " + extra : "") + " " + AQI[fn](v);
+  }
+  setInMetric(".in-metric-pm", 18, "pm25");
+  setInMetric(".in-metric-co2", 620, "co2");
+  setInMetric(".in-metric-tvoc", 3, "tvoc");
+  function setDiscBadge(sel, v, fn) {
+    const el = document.querySelector(sel);
+    el.querySelector(".val").textContent = Math.round(v);
+    el.className = "disc " + AQI[fn](v);
+  }
+  setDiscBadge(".out-pm25 .disc", 80, "pm25");
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function tick() {
+    const t = new Date();
+    document.getElementById("clock").textContent =
+      (t.getMonth()+1) + "月" + pad2(t.getDate()) + "日 " + pad2(t.getHours()) + ":" + pad2(t.getMinutes());
+  }
+  tick(); setInterval(tick, 1000);
+
+  if (new URLSearchParams(location.search).has("debug")) {
+    document.body.classList.add("debug");
+    document.querySelectorAll(".canvas-640 > *:not(.zone-house):not(.zone-outdoor)").forEach(n => n.classList.add("hit"));
+  }
+
+  console.info("Layout: 640×640 design, CSS scale(" + SCALE + ") → 480×480 display (matches ESPHome bg resize)");
+</script>
 </body>
 </html>
