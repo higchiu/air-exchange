@@ -40,14 +40,14 @@
 - PM2.5 / CO₂ / TVOC：**一行两个**（圆内数值，圆外右侧名称 + 单位；第 1 行 PM2.5 + CO₂，第 2 行 TVOC）
   - PM2.5：`pm25`（PMS5003），单位 μg/m³
   - CO₂：`co2_indoor`（SCD30），单位 ppm
-  - TVOC 等级：`tvoc_level`（HA），单位「级」
+  - TVOC 等级：`tvoc_level`（HA），单位「等级」
 - 圆章底色：绿 / 黄 / 红（见下表）
 
 ### 室外（右侧胶囊）
 - 温湿度：`temp_outdoor` / `humidity_outdoor`（室外 SHT31）
 - PM2.5：`pm25_city`（同城联网，HA），配色同 PM2.5
 
-### 配色阈值（µg/m³ / ppm / 级）
+### 配色阈值（µg/m³ / ppm / 等级）
 
 | 指标 | 绿 | 黄 | 红 |
 |------|----|----|-----|

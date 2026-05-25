@@ -8,7 +8,7 @@ sensor:
   - platform: template
     id: tvoc_level
     name: "tvoc_level"
-    unit_of_measurement: "级"
+    unit_of_measurement: "等级"
     accuracy_decimals: 0
     internal: true
     update_interval: 60s

@@ -1,0 +1,10 @@
+# 仅用于 Waveshare ESP32-S3-Touch-LCD-4（V3/V4）— 换 Guition 4848 请用 pinmap.yaml
+substitutions:
+  fan_supply_pwm_pin: "GPIO4"
+  fan_supply_tach_pin: "GPIO6"
+  fan_exhaust_pwm_pin: "GPIO0"
+  fan_exhaust_tach_pin: "GPIO16"
+  fan_supply_default_speed: "70"
+  fan_exhaust_default_speed: "50"
+  uart_pms_tx_pin: "GPIO44"
+  uart_pms_rx_pin: "GPIO43"

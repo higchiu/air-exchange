@@ -1,4 +1,5 @@
-# 用于确认开发板 V3 / V4，见 README.md「开发板版本」一节
+# I2C 扫描（Guition ESP32-S3-4848S040：SDA=19 SCL=45）
+# 期望见：0x5D GT911、0x44/0x45 SHT31、0x61 SCD30、0x20 MCP23017 等
 esphome:
   name: i2c-scan-test
 
@@ -10,7 +11,7 @@ logger:
   level: DEBUG
 
 i2c:
-  - sda: 15
-    scl: 7
+  - sda: GPIO19
+    scl: GPIO45
     scan: true
     frequency: 100kHz

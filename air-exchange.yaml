@@ -2,7 +2,7 @@
 # 硬件包路径按你本机 esphome-modular-lvgl-buttons 位置修改
 
 substitutions:
-  mcp_valves_address: "0x21"   # V3→0x21  V4→可改 0x20
+  mcp_valves_address: "0x20"   # Guition 4848S040；Waveshare V3→0x21 见 pinmap_waveshare_lcd4.yaml
   valve_home_mode: "stall"      # stall | manual | limit（无限位用 stall）
   icon_font: mdi_icons_40
   text_font: nunito_20
@@ -37,8 +37,11 @@ packages:
   # A) 无屏调试：保留 hardware_bus
   hardware_bus: !include packages/hardware_bus.yaml
 
-  # B) 触摸屏：注释 A，改挂 modular-lvgl（V3/V4 二选一，见 README 附录）
-  # hardware: !include esphome-modular-lvgl-buttons/hardware/waveshare-esp32-s3-touch-lcd-4-v4.yaml
+  # B) 触摸屏：注释 A，改挂 Guition 4848（见 air-exchange-display.yaml）
+  # hardware: !include
+  #   file: esphome-modular-lvgl-buttons/hardware/guition-esp32-s3-4848s040.yaml
+  #   vars:
+  #     rotation: "180"
 
   sensors_pkg: !include packages/sensors.yaml
   fan_pkg: !include packages/fan.yaml

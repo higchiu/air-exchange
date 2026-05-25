@@ -1,15 +1,15 @@
-# 带 LVGL 触控屏的完整配置（Waveshare 4" 480×480）
+# 带 LVGL 触控屏的完整配置（Guition ESP32-S3-4848S040，480×480）
 # 用法：
 #   1. 使用本仓库 vendor/esphome-modular-lvgl-buttons，或克隆到同级并改 lvgl_lib
 #   2. esphome run air-exchange-display.yaml
 #
 # 无屏调试请用 air-exchange.yaml
+# 若仍用 Waveshare LCD-4：见 packages/pinmap_waveshare_lcd4.yaml 与 README 附录
 
 substitutions:
-  # 与根目录 esphome-modular-lvgl-buttons 符号链接一致（主题字体路径依赖此目录名）
   lvgl_lib: "esphome-modular-lvgl-buttons"
-  board_hw: "waveshare-esp32-s3-touch-lcd-4-v4"   # V3 改为 waveshare-esp32-s3-touch-lcd-4
-  mcp_valves_address: "0x20"   # V3 改为 0x21
+  board_hw: "guition-esp32-s3-4848s040"
+  mcp_valves_address: "0x20"
   valve_home_mode: "stall"
   icon_font: mdi_icons_40
   text_font: nunito_20
@@ -31,10 +31,10 @@ substitutions:
 esphome:
   name: air-exchange
   friendly_name: "热交换新风机"
-  min_version: 2025.12.0
+  min_version: 2026.4.0
   project:
     name: "air-exchange.display"
-    version: "0.2.0"
+    version: "0.3.0"
   on_boot:
     - priority: 400
       then:
@@ -57,11 +57,6 @@ ota:
   - platform: esphome
     password: !secret ota_password
 
-external_components:
-  - source: github://pr#10071
-    components: [waveshare_io_ch32v003]
-    refresh: 1h
-
 packages:
   device_pins: !include packages/pinmap.yaml
   theme: !include esphome-modular-lvgl-buttons/common/theme/index.yaml
@@ -71,7 +66,10 @@ packages:
   ota_screen: !include esphome-modular-lvgl-buttons/common/ota.yaml
   loading_screen: !include esphome-modular-lvgl-buttons/pages/loading.yaml
   info_screen: !include esphome-modular-lvgl-buttons/pages/info.yaml
-  hardware: !include esphome-modular-lvgl-buttons/hardware/waveshare-esp32-s3-touch-lcd-4-v4.yaml
+  hardware: !include
+    file: esphome-modular-lvgl-buttons/hardware/guition-esp32-s3-4848s040.yaml
+    vars:
+      rotation: "180"
 
   display_ui: !include packages/display_ui.yaml
   main_page_assets: !include packages/main_page_assets.yaml

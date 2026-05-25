@@ -1,5 +1,6 @@
 # 温湿度 / CO2 / PM2.5
-# I2C：bus_a（硬件包 GPIO15/7）  UART：GPIO43/44（硬件包外需与下方一致）
+# I2C：bus_a（4848：GPIO19/45，见 guition hardware 或 hardware_bus.yaml）
+# UART：PMS5003，引脚见 packages/pinmap.yaml（4848 板载 UART 座 43/44）
 
 uart:
   - id: uart_pms

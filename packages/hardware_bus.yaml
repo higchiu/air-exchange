@@ -1,5 +1,6 @@
 # 最小硬件：仅 ESP32-S3 + I2C bus_a（无触摸屏）
-# 使用 LVGL 屏时：在 air-exchange.yaml 中改挂 esphome-modular-lvgl-buttons 的 hardware 包，并注释本文件
+# Guition 4848S040：SDA=GPIO19 SCL=GPIO45（与带屏 hardware 包一致）
+# 使用 LVGL 屏时：在 air-exchange-display.yaml 中挂 guition-esp32-s3-4848s040 hardware 包，并注释本文件
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -14,8 +15,8 @@ psram:
 
 i2c:
   - id: bus_a
-    sda: 15
-    scl: 7
+    sda: GPIO19
+    scl: GPIO45
     scan: true
     frequency: 100kHz
     timeout: 10ms

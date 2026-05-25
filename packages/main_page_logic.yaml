@@ -37,17 +37,17 @@ script:
           };
           auto pm25_style = [](float v) -> AqiStyle {
             if (v < 35.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
-            if (v < 75.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            if (v < 75.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xD07800)};
             return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
           };
           auto co2_style = [](float v) -> AqiStyle {
             if (v < 800.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
-            if (v < 1200.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            if (v < 1200.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xD07800)};
             return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
           };
           auto tvoc_style = [](float v) -> AqiStyle {
             if (v <= 2.0f) return {lv_color_hex(0xE5F4E8), lv_color_hex(0x45B673)};
-            if (v <= 4.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xF2AC47)};
+            if (v <= 4.0f) return {lv_color_hex(0xFFF4E0), lv_color_hex(0xD07800)};
             return {lv_color_hex(0xFCE8E8), lv_color_hex(0xF25B2B)};
           };
           auto apply_aqi_badge = [](lv_obj_t *badge, lv_obj_t *val, const AqiStyle &st) {

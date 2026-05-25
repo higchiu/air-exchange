@@ -25,7 +25,7 @@ color:
   - id: aqi_fg_green
     hex: "45B673"
   - id: aqi_fg_yellow
-    hex: "F2AC47"
+    hex: "D07800"
   - id: aqi_fg_red
     hex: "F25B2B"
   - id: panel_text

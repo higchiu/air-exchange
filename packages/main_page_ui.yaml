@@ -162,7 +162,7 @@ lvgl:
             y: 323
             text_font: font_cn_12
             text_color: panel_text_dim
-            text: "级"
+            text: "等级"
 
         # 室外 — 640 右侧胶囊内
         - label:

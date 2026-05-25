@@ -1,6 +1,8 @@
 # 热交换新风机（ESPHome）
 
-基于 **Waveshare ESP32-S3-Touch-LCD-4**（480×480 触控屏）+ [esphome-modular-lvgl-buttons](https://github.com/agillis/esphome-modular-lvgl-buttons) 的全热交换新风机控制方案。
+基于 **Guition ESP32-S3-4848S040**（480×480 触控屏）+ [esphome-modular-lvgl-buttons](https://github.com/agillis/esphome-modular-lvgl-buttons) 的全热交换新风机控制方案。
+
+> 仍使用 **Waveshare ESP32-S3-Touch-LCD-4** 时见 [README 附录](#附录waveshare-esp32-s3-touch-lcd-4) 与 `packages/pinmap_waveshare_lcd4.yaml`。
 
 | 文档 | 内容 |
 |------|------|
@@ -50,7 +52,8 @@ air-exchange/
     ├── actuators.yaml
     ├── erv_interlock.yaml
     ├── city_pm25.yaml           # 从 HA 订阅同城 PM2.5
-    └── pinmap.yaml              # 风机/PMS 引脚（两主 yaml 共用）
+    ├── pinmap.yaml              # Guition 4848 风机/PMS 引脚（默认）
+    └── pinmap_waveshare_lcd4.yaml  # 微雪 LCD-4 备用
 ```
 
 ---
@@ -73,11 +76,12 @@ air-exchange/
 
 ## LVGL 触控界面
 
-烧录 **`air-exchange-display.yaml`**（需 ESPHome **≥ 2026.4**，V4 板 CH32 组件）。
+烧录 **`air-exchange-display.yaml`**（需 ESPHome **≥ 2026.4**）。
 
 1. 本仓库已含 `vendor/esphome-modular-lvgl-buttons`，根目录有符号链接 `esphome-modular-lvgl-buttons`（主题字体路径依赖此名）。
 2. 亦可自行克隆到同级，并创建同名符号链接。
-3. V3 板：改 `hardware` 为 `waveshare-esp32-s3-touch-lcd-4.yaml`，`mcp_valves_address: "0x21"`。
+3. 默认整机为 **Guition 4848S040**；`hardware` 已指向 `guition-esp32-s3-4848s040.yaml`，**无需** `waveshare_io_ch32v003`。
+4. 外设须按 [PINOUT.txt](PINOUT.txt) 重接（I2C **19/45**，风机 **35/36/37/33**，PMS **43/44**）。
 
 ### main_page（日立风格）
 
@@ -109,12 +113,12 @@ esphome run air-exchange-display.yaml
 
 | 外设 | 接法 |
 |------|------|
-| I2C 总线 | 板子 **GPIO15=SDA、GPIO7=SCL** → SHT31×2、SCD30、MCP23017 |
-| MCP23017 | 地址 `0x21`（V3）或 `0x20`（V4），见附录 |
+| I2C 总线 | **GPIO19=SDA、GPIO45=SCL** → SHT31×2、SCD30、MCP23017（与 GT911 同 bus） |
+| MCP23017 | 默认 **`0x20`**（`i2c-scan.yaml` 确认） |
 | ULN2003×3 | MCP 0–11 → 进/排/混 35BYJ-46；电机 **12V** 独立供电 |
-| PMS5003 | **GPIO43←TX、GPIO44→RX**，5V 供电 |
-| 送风 CLK / FG | **GPIO4** PWM→蓝线、**GPIO6**←橙线 |
-| 排风 CLK / FG | **GPIO0** PWM→蓝线、**GPIO16**←橙线 |
+| PMS5003 | 板载 UART 座 **GPIO43/44**，5V 供电 |
+| 送风 CLK / FG | **GPIO35** PWM→蓝线、**GPIO36**←橙线 |
+| 排风 CLK / FG | **GPIO37** PWM→蓝线、**GPIO33**←橙线 |
 | 风阀关位 | **无开关**：关向机械挡块（stall 寻零） |
 
 详见 [PINOUT.txt](PINOUT.txt)。
@@ -322,7 +326,7 @@ cp secrets.yaml.example secrets.yaml
 [air-exchange.yaml](air-exchange.yaml) 中二选一：
 
 - **无屏调试（默认）**：保留 `hardware_bus`
-- **带触摸屏**：注释 `hardware_bus`，取消注释 `hardware: !include .../waveshare-...-v4.yaml`（或 V3）
+- **带触摸屏**：烧 `air-exchange-display.yaml`（已含 Guition hardware 包）
 
 ### 4. 编译
 
@@ -403,7 +407,7 @@ city_pm25_entity_id: "sensor.shanghai_pm2_5"   # 改成你的实体 ID
 
 | 类别 | 器件 |
 |------|------|
-| 显示 | 4″ 480×480 LVGL（需 modular-lvgl，未含界面） |
+| 显示 | Guition 4848S040，4″ 480×480 LVGL |
 | 环境 | SHT31 室内/外、SCD30 CO₂、PMS5003 室内 PM2.5、HA 同城 PM2.5 |
 | 执行 | 送风/排风 ECM（如 48F704P400，CLK/FG）；35BYJ×3 + ULN2003；MCP23017 |
 | 风阀 | 固定关 0 / 各自开角；默认挡块寻零 |
@@ -420,25 +424,27 @@ city_pm25_entity_id: "sensor.shanghai_pm2_5"   # 改成你的实体 ID
 
 ## 相关链接
 
-- [Waveshare Wiki — ESP32-S3-Touch-LCD-4](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-4)
+- [Guition 4848S040 — ESPHome Devices](https://devices.esphome.io/devices/guition-esp32-s3-4848s040/)
 - [esphome-modular-lvgl-buttons](https://github.com/agillis/esphome-modular-lvgl-buttons)
 
 ---
 
-## 附录：开发板 V3 / V4
+## 附录：Waveshare ESP32-S3-Touch-LCD-4
 
-微雪板有两版硬件，影响 `hardware` 包与 `mcp_valves_address`。
+若仍用微雪 4″ 板（非本仓库默认）：
 
-| 地址 | 版本 |
-|------|------|
-| `0x24` | V4（CH32V003） |
-| `0x20` 且无 `0x24` | V3（TCA9554） |
+1. `air-exchange-display.yaml` 中改 `hardware` 为 `waveshare-esp32-s3-touch-lcd-4-v4.yaml`（V3 用 `-4.yaml`）。
+2. 恢复 `external_components` 的 `waveshare_io_ch32v003`。
+3. `device_pins` 改为 `packages/pinmap_waveshare_lcd4.yaml`。
+4. I2C **GPIO15/7**；风机 **4/6/0/16**；MCP **0x21**（V3）或 **0x20**（V4，避开 CH32 `0x24`）。
 
 ```bash
-esphome run i2c-scan.yaml
+esphome run i2c-scan.yaml   # 4848 板请用当前仓库 i2c-scan（19/45）
 ```
 
 | 版本 | hardware 包 | `mcp_valves_address` |
 |------|-------------|----------------------|
 | V3 | `waveshare-esp32-s3-touch-lcd-4.yaml` | `0x21` |
 | V4 | `waveshare-esp32-s3-touch-lcd-4-v4.yaml` | `0x20` |
+
+[Waveshare Wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-4)

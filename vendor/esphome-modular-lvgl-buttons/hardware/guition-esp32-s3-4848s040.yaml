@@ -72,6 +72,8 @@ i2c:
     scl:
       number: GPIO45
       ignore_strapping_warning: true
+    scan: true
+    frequency: 100kHz
 
 touchscreen:
   platform: gt911
