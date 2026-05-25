@@ -7,6 +7,7 @@
 | 文档 | 内容 |
 |------|------|
 | [PINOUT.txt](PINOUT.txt) | GPIO、MCP 引脚、I2C 地址、供电 |
+| [docs/TVOC_SENSOR.md](docs/TVOC_SENSOR.md) | TVOC 传感器选型、接线、HA/ESPHome 接入 |
 | [secrets.yaml.example](secrets.yaml.example) | Wi-Fi / API / OTA 模板 |
 | 下文 § 风机 CLK/FG | Nidec 48F704P400 等 ECM 接线 |
 | 下文 § 35BYJ 接线 | MCP / ULN / 电机照片级线表 |
